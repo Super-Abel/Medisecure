@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=medisecure
+POSTGRES_USER=hxbFRjcPwroOowDJojSCJMYhhrwXAVDE
+POSTGRES_PASSWORD=0pnCSpVxDks0ZvYrOmn1yDvo1FG9eOg6qmoJGvLejw4JgVkRVqlTUdSbYBDygQFV
