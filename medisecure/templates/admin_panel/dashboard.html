@@ -1,0 +1,249 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Dashboard — MediSecure Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<!-- Stats -->
+<div class="row">
+  <div class="col">
+    <div class="stat-card">
+      <div class="icon blue"><i class="bi bi-people"></i></div>
+      <div>
+        <div class="value">{{ stats.total_users }}</div>
+        <div class="label">Utilisateurs total</div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="stat-card">
+      <div class="icon green"><i class="bi bi-person-heart"></i></div>
+      <div>
+        <div class="value">{{ stats.total_patients }}</div>
+        <div class="label">Patients</div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="stat-card">
+      <div class="icon purple"><i class="bi bi-hospital"></i></div>
+      <div>
+        <div class="value">{{ stats.total_medecins }}</div>
+        <div class="label">Médecins</div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="stat-card">
+      <div class="icon yellow"><i class="bi bi-calendar3"></i></div>
+      <div>
+        <div class="value">{{ stats.total_rdvs }}</div>
+        <div class="label">Rendez-vous</div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="stat-card">
+      <div class="icon red"><i class="bi bi-journal-text"></i></div>
+      <div>
+        <div class="value">{{ stats.total_logs }}</div>
+        <div class="label">Actions journalisées</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="row" style="margin-bottom: 20px">
+  <div class="col" style="flex: 1">
+    <div class="panel">
+      <div class="panel-header">
+        <span
+          ><i class="bi bi-pie-chart" style="color: var(--accent-purple)"></i>
+          Répartition Utilisateurs</span
+        >
+      </div>
+      <div
+        class="panel-body"
+        style="
+          height: 250px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <canvas id="rolesChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col" style="flex: 2">
+    <div class="panel">
+      <div class="panel-header">
+        <span
+          ><i class="bi bi-bar-chart" style="color: var(--accent-green)"></i>
+          État des RDV</span
+        >
+      </div>
+      <div class="panel-body" style="height: 250px">
+        <canvas id="rdvChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Logs + RDV en attente -->
+<div class="row" style="align-items: flex-start">
+  <!-- Derniers logs -->
+  <div class="col" style="flex: 2">
+    <div class="panel">
+      <div class="panel-header">
+        <span
+          ><i class="bi bi-journal-text" style="color: var(--accent-blue)"></i>
+          Dernières actions</span
+        >
+        <a href="{% url 'admin_panel:logs' %}" class="btn-ms btn-ghost btn-sm"
+          >Voir tout <i class="bi bi-arrow-right"></i
+        ></a>
+      </div>
+      <div class="panel-body">
+        {% if recent_logs %}
+        <table class="ms-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Action</th>
+              <th>IP</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in recent_logs %}
+            <tr>
+              <td>{{ log.utilisateur.email }}</td>
+              <td
+                style="
+                  max-width: 260px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                "
+              >
+                {{ log.action }}
+              </td>
+              <td style="color: var(--text-muted)">
+                {{ log.adresse_ip|default:"—" }}
+              </td>
+              <td style="color: var(--text-muted); white-space: nowrap">
+                {{ log.date_action|date:"d/m/Y H:i" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-journal-x"></i>Aucun log disponible
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RDV en attente -->
+  <div class="col" style="flex: 1">
+    <div class="panel">
+      <div class="panel-header">
+        <span
+          ><i class="bi bi-clock" style="color: var(--accent-yellow)"></i> RDV
+          en attente</span
+        >
+        <a href="{% url 'admin_panel:rdvs' %}" class="btn-ms btn-ghost btn-sm"
+          >Voir tout</a
+        >
+      </div>
+      <div class="panel-body">
+        {% if pending_rdvs %}
+        <table class="ms-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Médecin</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rdv in pending_rdvs %}
+            <tr>
+              <td>{{ rdv.patient.user.nom }}</td>
+              <td>{{ rdv.medecin.user.nom }}</td>
+              <td style="color: var(--text-muted); white-space: nowrap">
+                {{ rdv.date_heure|date:"d/m H:i" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-calendar-check"></i>Aucun RDV en attente
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Colors for charts
+  const colors = {
+    blue: '#0d6efd',
+    green: '#198754',
+    purple: '#6f42c1',
+    yellow: '#ffc107',
+    red: '#dc3545',
+    muted: '#6c757d'
+  };
+
+  // 1. Roles Chart
+  const ctxRoles = document.getElementById('rolesChart').getContext('2d');
+  new Chart(ctxRoles, {
+    type: 'doughnut',
+    data: {
+      labels: ['Patients', 'Médecins', 'Admins'],
+      datasets: [{
+        data: {{ chart_data.roles|safe }},
+        backgroundColor: [colors.green, colors.purple, colors.blue],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: 'var(--text-muted)' } }
+      }
+    }
+  });
+
+  // 2. RDV Status Chart
+  const ctxRdv = document.getElementById('rdvChart').getContext('2d');
+  new Chart(ctxRdv, {
+    type: 'bar',
+    data: {
+      labels: ['En attente', 'Confirmé', 'Annulé', 'Terminé'],
+      datasets: [{
+        label: 'Nombre de RDV',
+        data: {{ chart_data.rdv_status|safe }},
+        backgroundColor: [colors.yellow, colors.blue, colors.red, colors.green],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'var(--border-color)' }, ticks: { color: 'var(--text-muted)' } },
+        x: { grid: { display: false }, ticks: { color: 'var(--text-muted)' } }
+      }
+    }
+  });
+</script>
+{% endblock %}

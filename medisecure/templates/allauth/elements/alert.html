@@ -1,7 +1,8 @@
-{% load i18n %}
-{% load allauth %}
-
-<div class="alert alert-error">
-  {% slot message %}
-{% endslot %}
+{% load i18n allauth %}
+<div style="padding:10px 14px; border-radius:6px; margin-bottom:14px; font-size:13px; display:flex; align-items:center; gap:8px;
+{% if 'error' in attrs.tags or 'danger' in attrs.tags %}background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444;
+{% elif 'success' in attrs.tags %}background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#22c55e;
+{% elif 'warning' in attrs.tags %}background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#f59e0b;
+{% else %}background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#3b82f6;{% endif %}">
+  {% slot message %}{% endslot %}
 </div>

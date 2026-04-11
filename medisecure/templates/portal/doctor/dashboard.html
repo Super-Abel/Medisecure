@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+<!-- prettier-ignore -->
+{% block title %}Portail Médecin - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">Bonjour, Dr. {{ request.user.prenom }} {{ request.user.nom }}</h1>
+    <p class="text-muted">Aperçu de votre journée du {% now "l d F Y" %}</p>
+  </div>
+</div>
+
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="ms-card h-100 border-start border-4 border-primary">
+      <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+          <i class="bi bi-people text-primary fs-3"></i>
+        </div>
+        <div>
+          <h6 class="text-muted small mb-0">Consultations prévues</h6>
+          <p class="fs-5 fw-bold mb-0">{{ rdv_jour.count }} ce jour</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="ms-card p-0 overflow-hidden">
+      <div class="card-header bg-transparent border-0 px-4 py-4 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Planning d'aujourd'hui</h5>
+        <button class="ms-btn ms-btn-secondary btn-sm">
+          <i class="bi bi-calendar3"></i> Tout l'agenda
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="ms-table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Heure</th>
+              <th>Patient</th>
+              <th>Motif</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rdv in rdv_jour %}
+            <tr>
+              <td class="ps-4 fw-bold text-primary">
+                {{ rdv.date_heure|time:"H:i" }}
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.8rem;">
+                    {{ rdv.patient.user.prenom|first }}
+                  </div>
+                  <span class="fw-semibold">{{ rdv.patient.user.prenom }} {{ rdv.patient.user.nom }}</span>
+                </div>
+              </td>
+              <td class="small">{{ rdv.motif|default:"Consultation générale" }}</td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-2">
+                  <a href="{% url 'portal:doctor-dossier' rdv.patient.id %}" class="ms-btn ms-btn-secondary btn-sm">
+                    Dossier
+                  </a>
+                  {% if rdv.statut != 'TERMINE' %}
+                  <form action="{% url 'portal:rdv-finish' rdv.id %}" method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="ms-btn ms-btn-success btn-sm">
+                      Terminer
+                    </button>
+                  </form>
+                  {% else %}
+                  <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2">Terminé</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted">
+                <i class="bi bi-cup-hot fs-1 d-block mb-2"></i>
+                <p class="small mb-0">Aucun rendez-vous planifié aujourd'hui.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

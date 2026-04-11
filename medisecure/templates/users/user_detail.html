@@ -5,9 +5,8 @@
 {% block title %}
   User: 
   
-    {{ object.name }}
-  
-  
+    {{ object.name|default:object.email }}
+
 {% endblock title %}
 {% block content %}
   <div class="container">
@@ -16,8 +15,8 @@
         <h2>
         
         
-          {{ object.name }}
-        
+          {{ object.name|default:object.email }}
+
       </h2>
     </div>
   </div>

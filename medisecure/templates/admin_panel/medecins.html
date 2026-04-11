@@ -1,0 +1,168 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Médecins — MediSecure Admin{% endblock %}
+{% block page_title %}Gestion des médecins{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span
+      ><i class="bi bi-hospital" style="color: var(--accent-purple)"></i>
+      Médecins ({{ medecins.count }})</span
+    >
+  </div>
+  <div class="panel-body">
+    {% if medecins %}
+    <table class="ms-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nom complet</th>
+          <th>Email</th>
+          <th>Spécialité</th>
+          <th>Cabinet</th>
+          <th>N° Licence</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in medecins %}
+        <tr>
+          <td style="color: var(--text-muted)">{{ m.id }}</td>
+          <td>Dr {{ m.user.nom }} {{ m.user.prenom }}</td>
+          <td style="color: var(--text-muted)">{{ m.user.email }}</td>
+          <td>
+            {% if m.specialite %}<span class="badge-role badge-medecin"
+              >{{ m.specialite.nom_specialite }}</span
+            >{% else %}—{% endif %}
+          </td>
+          <td>{{ m.cabinet.nom|default:"—" }}</td>
+          <td style="font-family: monospace; color: var(--text-muted)">
+            {{ m.numero_licence }}
+          </td>
+          <td>
+            <!-- prettier-ignore -->
+            {% if m.user.statut %}<span class="badge-role badge-active">Actif</span>{% else %}<span class="badge-role badge-inactive">Inactif</span>{% endif %}
+          </td>
+          <td>
+            <button
+              class="btn-ms btn-warning btn-sm"
+              onclick="openEditMedecinModal('{{ m.id }}', '{{ m.user.nom }}', '{{ m.user.prenom }}', '{{ m.numero_licence }}', '{{ m.specialite.id|default:'' }}', '{{ m.cabinet.id|default:'' }}')"
+            >
+              <i class="bi bi-pencil"></i> Éditer
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-hospital"></i>Aucun médecin enregistré
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block modal %}
+<div class="ms-modal-backdrop" id="modal-edit-medecin">
+  <div class="ms-modal">
+    <h3>
+      <i class="bi bi-pencil-square" style="color: var(--accent-purple)"></i>
+      Éditer Médecin
+    </h3>
+    <form method="post" action="" id="form-edit-medecin">
+      {% csrf_token %}
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 10px;
+        "
+      >
+        <div>
+          <label>Nom</label
+          ><input
+            type="text"
+            name="nom"
+            id="edit-m-nom"
+            class="ms-form-control"
+            required
+          />
+        </div>
+        <div>
+          <label>Prénom</label
+          ><input
+            type="text"
+            name="prenom"
+            id="edit-m-prenom"
+            class="ms-form-control"
+            required
+          />
+        </div>
+      </div>
+      <div style="margin-bottom: 10px">
+        <label>N° Licence</label>
+        <input
+          type="text"
+          name="numero_licence"
+          id="edit-m-licence"
+          class="ms-form-control"
+          required
+        />
+      </div>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 16px;
+        "
+      >
+        <div>
+          <label>Spécialité</label>
+          <select name="specialite" id="edit-m-spec" class="ms-form-control">
+            <option value="">— Sélectionner —</option>
+            {% for s in specialites %}
+            <option value="{{ s.id }}">{{ s.nom_specialite }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Cabinet</label>
+          <select name="cabinet" id="edit-m-cab" class="ms-form-control">
+            <option value="">— Sélectionner —</option>
+            {% for c in cabinets %}
+            <option value="{{ c.id }}">{{ c.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end">
+        <button
+          type="button"
+          class="btn-ms btn-ghost"
+          onclick="closeModal('modal-edit-medecin')"
+        >
+          Annuler
+        </button>
+        <button type="submit" class="btn-ms btn-primary">
+          <i class="bi bi-check2"></i> Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function openEditMedecinModal(id, nom, prenom, licence, specId, cabId) {
+    const form = document.getElementById("form-edit-medecin");
+    form.action = `/dashboard/medecins/${id}/edit/`;
+    document.getElementById("edit-m-nom").value = nom;
+    document.getElementById("edit-m-prenom").value = prenom;
+    document.getElementById("edit-m-licence").value = licence;
+    document.getElementById("edit-m-spec").value = specId;
+    document.getElementById("edit-m-cab").value = cabId;
+    openModal("modal-edit-medecin");
+  }
+</script>
+{% endblock %}

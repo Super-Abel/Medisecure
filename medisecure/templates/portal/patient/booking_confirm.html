@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Confirmer RDV avec Dr. {{ medecin.user.nom }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mb-5">
+  <div class="col-lg-6">
+    <div class="ms-card p-0 overflow-hidden">
+      <div class="card-header bg-transparent border-0 px-4 py-4">
+        <div class="d-flex align-items-center">
+          <a href="{% url 'portal:patient-booking' %}" class="ms-btn ms-btn-secondary p-2 me-3" style="width: 40px; height: 40px; justify-content: center; border-radius: 50%;">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+          <h5 class="mb-0 fw-bold">Prendre rendez-vous</h5>
+        </div>
+      </div>
+      <div class="card-body px-4 pb-4">
+        <div class="d-flex align-items-center justify-content-center mb-4">
+          <div class="avatar-lg rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: 800;">
+            {{ medecin.user.prenom|first }}{{ medecin.user.nom|first }}
+          </div>
+          <div>
+            <h5 class="fw-bold mb-1">
+              Dr. {{ medecin.user.prenom }} {{ medecin.user.nom }}
+            </h5>
+            <p class="text-primary fw-medium small mb-0">
+              {{ medecin.specialite.nom_specialite }}
+            </p>
+          </div>
+        </div>
+
+        <form method="post" class="needs-validation">
+          {% csrf_token %} {{ form|crispy }}
+          <div class="text-end mt-4">
+            <button type="submit" class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
+              Confirmer le rendez-vous
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

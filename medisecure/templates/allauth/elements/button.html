@@ -1,20 +1,12 @@
 {% load allauth %}
-
 {% comment %} djlint:off {% endcomment %}
 <{% if attrs.href %}a href="{{ attrs.href }}"{% else %}button{% endif %}
-                      {% if attrs.form %}form="{{ attrs.form }}"{% endif %}
-                      {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
-                      {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
-                      {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-                      class="btn
-{% if 'success' in attrs.tags %}btn-success
-{% elif 'warning' in attrs.tags %}btn-warning
-{% elif 'secondary' in attrs.tags %}btn-secondary
-{% elif 'danger' in attrs.tags %}btn-danger
-{% elif 'primary' in attrs.tags %}btn-primary
-{% else %}btn-primary
-{% endif %}"
+  {% if attrs.form %}form="{{ attrs.form }}"{% endif %}
+  {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+  {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+  {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
+  style="width:100%; background:#3b82f6; color:#fff; border:none; padding:11px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; margin-top:8px; transition:background 0.15s; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;"
+  onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'"
 >
-  {% slot %}
-  {% endslot %}
-  </{% if attrs.href %}a{% else %}button{% endif %}>
+  {% slot %}{% endslot %}
+</{% if attrs.href %}a{% else %}button{% endif %}>

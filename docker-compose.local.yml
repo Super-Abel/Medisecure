@@ -92,4 +92,4 @@ services:
       - /app/node_modules
     command: npm run dev
     ports:
-      - '3000:3000'
+      - '3001:3001'

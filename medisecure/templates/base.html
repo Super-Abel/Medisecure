@@ -1,133 +1,174 @@
-
-{% load static i18n %}
-    {% load render_bundle from webpack_loader %}
-
-  <!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}
+﻿{% load static i18n %} {% load render_bundle from webpack_loader %}
+<!doctype html>
 <html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>
-      {% block title %}
-      MediSecure
-    {% endblock title %}
-  </title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description"
-        content="Plateforme sécurisée de gestion médicale et télémédecine" />
-  <meta name="author"
-        content="Super Abel" />
-  <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
-  {% block css %}
-<!-- Your stuff: Third-party CSS libraries go here -->
-<!-- This file stores project-specific CSS -->
-
-
-{% render_bundle 'project' 'css' %}
-
-
-{% endblock css %}
-<!-- Le javascript
-    ================================================== -->
-{# Placed at the top of the document so pages load faster with defer #}
-{% block javascript %}
-
-
-<!-- Vendor dependencies bundled as one file -->
-{% render_bundle 'vendors' 'js' attrs='defer' %}
-
-
-<!-- place project specific Javascript in this file -->
-
-
-{% render_bundle 'project' 'js' attrs='defer' %}
-
-
-{% endblock javascript %}
-</head>
-<body class="{% block bodyclass %}{% endblock bodyclass %}">
-  {% block body %}
-  <div class="mb-1">
-    <nav class="navbar navbar-expand-md navbar-light bg-light">
-      <div class="container-fluid">
-        <button class="navbar-toggler navbar-toggler-right"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand" href="{% url 'home' %}">MediSecure</a>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'about' %}">About</a>
-            </li>
-            {% if request.user.is_authenticated %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %} MediSecure {% endblock title %}</title>
+    {% block css %} {% render_bundle "project" "css" %} {% endblock css %}
+    <style>
+      [data-theme="light"] .theme-icon-dark { display: none; }
+      [data-theme="dark"]  .theme-icon-light { display: none; }
+    </style>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+      (function () {
+        const theme = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body class="{% block bodyclass %}{% endblock bodyclass %}">
+    {% block body %}
+    <header class="sticky-top">
+      <nav class="navbar navbar-expand-md ms-navbar">
+        <div class="container">
+          <a class="navbar-brand" href="{% url 'home' %}">
+            <i class="bi bi-shield-plus me-2"></i>MediSecure
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
               <li class="nav-item">
-                <a class="nav-link"
-                   href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
+                <a class="nav-link" href="{% url 'home' %}">Acceuil</a>
               </li>
               <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a class="nav-link" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
+                <a class="nav-link" href="{% url 'about' %}">À propos</a>
               </li>
-            {% else %}
-              {% if ACCOUNT_ALLOW_REGISTRATION %}
-                <li class="nav-item">
-                  {# URL provided by django-allauth/account/urls.py #}
-                  <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% translate "Sign Up" %}</a>
-                </li>
+              {% if request.user.is_authenticated %}
+              <li class="nav-item">
+                <a
+                  class="nav-link fw-bold text-primary"
+                  href="{% url 'users:redirect' %}"
+                  >Espace Personnel</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'account_logout' %}"
+                  >{% translate "Sign Out" %}</a
+                >
+              </li>
               {% endif %}
-              <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% translate "Sign In" %}</a>
+            </ul>
+            <div class="d-flex align-items-center gap-3">
+              {% if not request.user.is_authenticated %}
+              <a class="nav-link px-2" href="{% url 'account_login' %}"
+                >Se connecter</a
+              >
+              <a
+                class="btn btn-premium btn-premium-primary py-2 px-4 shadow-sm"
+                href="{% url 'account_signup' %}"
+              >
+                S'inscrire
+              </a>
+              {% endif %}
+              <button
+                class="btn btn-link nav-link p-2"
+                onclick="window.toggleTheme()"
+                title="Basculer le thème"
+              >
+                <i class="bi bi-sun-fill theme-icon-light fs-5"></i>
+                <i class="bi bi-moon-stars-fill theme-icon-dark fs-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div class="container">
+      {% if messages %} {% for message in messages %}
+      <div
+        class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %} mt-3"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      <!-- prettier-ignore -->
+      {% endfor %} {% endif %} {% block main %} {% block content %}{% endblock content %} {% endblock main %}
+    </div>
+
+    <footer class="ms-footer mt-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 mb-4">
+            <a class="footer-logo navbar-brand mb-3 d-block" href="#">
+              <i class="bi bi-shield-plus me-2"></i>MediSecure
+            </a>
+            <p class="text-muted">
+              Votre santé, notre priorité. Une plateforme sécurisée pour vos
+              consultations et votre suivi médical.
+            </p>
+            <div class="social-links mt-4">
+              <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
+              <a href="#" class="me-2"><i class="bi bi-twitter-x"></i></a>
+              <a href="#" class="me-2"><i class="bi bi-linkedin"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Plateforme</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Prendre RDV</a
+                >
               </li>
-            {% endif %}
-          </ul>
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Téléconsultation</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Support</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="#" class="text-muted text-decoration-none"
+                  >Centre d'aide</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-muted text-decoration-none">Contact</a>
+              </li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-4 mb-4">
+            <h5 class="fw-bold mb-3">Newsletter</h5>
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Email" />
+              <button class="btn btn-premium-primary" type="button">OK</button>
+            </div>
+          </div>
+        </div>
+        <hr class="my-4" style="opacity: 0.1" />
+        <div class="text-center text-muted small pb-4">
+          &copy; 2026 MediSecure. Tous droits réservés.
         </div>
       </div>
-    </nav>
-  </div>
-  <div class="container">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-          {{ message }}
-          <button type="button"
-                  class="btn-close"
-                  data-bs-dismiss="alert"
-                  aria-label="Close"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
-    {% block main %}
-      {% block content %}
-        <p>Use this document as a way to quick start any new project.</p>
-      {% endblock content %}
-    {% endblock main %}
-
-  </div>
-  {% endblock body %}
-  <!-- /container -->
-  {% block modal %}
-  {% endblock modal %}
-  {% block inline_javascript %}
-    {% comment %}
-    Script tags with only code, no src (defer by default). To run
-    with a "defer" so that you run inline code:
+    </footer>
+    {% endblock body %}
+    <!-- prettier-ignore -->
+    {% block inline_javascript %}{% endblock inline_javascript %}
     <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        /* Run whatever you want */
-      });
+      window.toggleTheme = function () {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      };
     </script>
-    {% endcomment %}
-  {% endblock inline_javascript %}
-</body>
+  </body>
 </html>

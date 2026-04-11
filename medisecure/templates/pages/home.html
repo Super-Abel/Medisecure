@@ -1,3 +1,131 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% load static %} {% block title %}Acceuil —
+MediSecure{% endblock %} {% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-content animate-up">
+      <h1>La Médecine de Demain, <br />Disponible Aujourd'hui.</h1>
+      <p class="lead">
+        Simplifiez votre parcours de santé avec MediSecure. Prenez rendez-vous
+        en quelques clics avec les meilleurs spécialistes de votre région.
+      </p>
+      <div class="d-flex gap-3 mt-4">
+        <a
+          href="{% url 'account_signup' %}"
+          class="btn-premium btn-premium-primary"
+        >
+          <i class="bi bi-person-plus"></i> Créer mon compte
+        </a>
+        <a
+          href="{% url 'account_login' %}"
+          class="btn-premium btn-premium-outline"
+        >
+          <i class="bi bi-box-arrow-in-right"></i> Se connecter
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
 
+<!-- Stats Bar -->
+<section class="py-5" style="border-bottom: 1px solid var(--border-color)">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 stat-box animate-up delay-1">
+        <span class="number">150+</span>
+        <span class="label">Médecins Experts</span>
+      </div>
+      <div class="col-md-4 stat-box animate-up delay-1">
+        <span class="number">10k+</span>
+        <span class="label">Patients Satisfaits</span>
+      </div>
+      <div class="col-md-4 stat-box animate-up delay-1">
+        <span class="number">50k+</span>
+        <span class="label">Consultations Réalisées</span>
+      </div>
+    </div>
+  </div>
+</section>
 
+<!-- Features Section -->
+<section class="py-5 bg-light-subtle">
+  <div class="container">
+    <div class="text-center mb-5 animate-up">
+      <h2 class="fw-bold">Pourquoi choisir MediSecure ?</h2>
+      <p class="text-muted">
+        Une plateforme conçue pour votre bien-être et votre sécurité.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4 animate-up delay-2">
+        <div class="glass-card">
+          <div class="icon" style="background: var(--accent-blue)">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h4>Sécurité Maximale</h4>
+          <p class="text-muted">
+            Vos données médicales sont cryptées et stockées en toute sécurité,
+            conformément aux normes HDS.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4 animate-up delay-2">
+        <div class="glass-card">
+          <div class="icon" style="background: var(--accent-purple)">
+            <i class="bi bi-calendar-event"></i>
+          </div>
+          <h4>Gestion Intuitive</h4>
+          <p class="text-muted">
+            Gérez vos rendez-vous, vos ordonnances et vos rappels de santé
+            depuis une interface unique.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4 animate-up delay-2">
+        <div class="glass-card">
+          <div class="icon" style="background: var(--accent-green)">
+            <i class="bi bi-telephone-plus"></i>
+          </div>
+          <h4>Téléconsultation</h4>
+          <p class="text-muted">
+            Consultez votre médecin à distance via notre système de vidéo
+            sécurisé, où que vous soyez.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Final -->
+<section class="py-5 mb-5">
+  <div class="container">
+    <div
+      class="glass-card text-center p-5 animate-up delay-3"
+      style="
+        background: linear-gradient(
+          135deg,
+          var(--accent-blue),
+          var(--accent-purple)
+        );
+        color: white;
+      "
+    >
+      <h2 class="mb-3">Prêt à prendre soin de votre santé ?</h2>
+      <p class="mb-4 opacity-75">
+        Rejoignez des milliers de patients qui font confiance à MediSecure.
+      </p>
+      <a
+        href="{% url 'account_signup' %}"
+        class="btn btn-light btn-lg px-5 rounded-pill fw-bold"
+        style="color: var(--accent-blue)"
+      >
+        Commencer Maintenant
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

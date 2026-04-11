@@ -1,6 +1,7 @@
 # General
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
+DATABASE_URL=postgres://hxbFRjcPwroOowDJojSCJMYhhrwXAVDE:0pnCSpVxDks0ZvYrOmn1yDvo1FG9eOg6qmoJGvLejw4JgVkRVqlTUdSbYBDygQFV@postgres:5432/medisecure
 IPYTHONDIR=/app/.ipython
 # Redis
 # ------------------------------------------------------------------------------

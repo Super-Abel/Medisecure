@@ -1,0 +1,259 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Utilisateurs — MediSecure Admin{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-ms btn-primary" onclick="openModal('modal-create-user')">
+  <i class="bi bi-person-plus"></i> Nouvel utilisateur
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span><i class="bi bi-people" style="color:var(--accent-blue)"></i> Utilisateurs ({{ page_obj.paginator.count }})</span>
+  </div>
+
+  <!-- Barre de contrôles DataTable -->
+  <div style="padding:14px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <!-- Gauche : afficher X entrées -->
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted)">
+      Afficher
+      <form method="get" id="form-per-page" style="display:inline">
+        <input type="hidden" name="q" value="{{ request.GET.q }}"/>
+        <input type="hidden" name="role" value="{{ request.GET.role }}"/>
+        <input type="hidden" name="statut" value="{{ request.GET.statut }}"/>
+        <select name="per_page" class="ms-form-control" style="width:70px; padding:4px 8px"
+                onchange="document.getElementById('form-per-page').submit()">
+          {% for n in per_page_choices %}
+            <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      entrées
+    </div>
+
+    <!-- Centre : action groupée -->
+    <form method="post" action="{% url 'admin_panel:bulk_action_users' %}" id="form-bulk">
+      {% csrf_token %}
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px">
+        <span style="color:var(--text-muted)">Appliquer sur les</span>
+        <strong id="selected-count" style="color:var(--accent-blue); min-width:16px; text-align:center">0</strong>
+        <span style="color:var(--text-muted)">sélectionnés</span>
+        <select name="action" class="ms-form-control" style="width:180px; padding:4px 8px" id="bulk-select">
+          <option value="">— Sélectionner —</option>
+          <option value="activate">Activer</option>
+          <option value="deactivate">Désactiver</option>
+          <option value="role_patient">Rôle → Patient</option>
+          <option value="role_medecin">Rôle → Médecin</option>
+          <option value="role_admin">Rôle → Admin</option>
+        </select>
+        <button type="submit" class="btn-ms btn-warning" onclick="return confirmBulk()">
+          <i class="bi bi-check2-all"></i> Appliquer
+        </button>
+      </div>
+    </form>
+
+    <!-- Droite : filtres + recherche -->
+    <form method="get" id="form-filter" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+      <input type="hidden" name="per_page" value="{{ per_page }}"/>
+      <span style="font-size:13px; color:var(--text-muted)">Rechercher :</span>
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Email, nom..." class="ms-form-control" style="width:200px; padding:5px 10px"/>
+      <select name="role" class="ms-form-control" style="width:130px; padding:5px 8px">
+        <option value="">Tous rôles</option>
+        <option value="PATIENT"  {% if request.GET.role == "PATIENT"  %}selected{% endif %}>Patient</option>
+        <option value="MEDECIN"  {% if request.GET.role == "MEDECIN"  %}selected{% endif %}>Médecin</option>
+        <option value="ADMIN"    {% if request.GET.role == "ADMIN"    %}selected{% endif %}>Admin</option>
+      </select>
+      <select name="statut" class="ms-form-control" style="width:120px; padding:5px 8px">
+        <option value="">Tous statuts</option>
+        <option value="1" {% if request.GET.statut == "1" %}selected{% endif %}>Actif</option>
+        <option value="0" {% if request.GET.statut == "0" %}selected{% endif %}>Inactif</option>
+      </select>
+      <button type="submit" class="btn-ms btn-ghost btn-sm"><i class="bi bi-search"></i></button>
+      <a href="{% url 'admin_panel:users' %}" class="btn-ms btn-ghost btn-sm"><i class="bi bi-x"></i></a>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="panel-body">
+    {% if page_obj %}
+    <table class="ms-table">
+      <thead>
+        <tr>
+          <th style="width:36px">
+            <input type="checkbox" id="check-all" style="accent-color:var(--accent-blue); cursor:pointer; width:15px; height:15px"/>
+          </th>
+          <th>#</th>
+          <th>Email</th>
+          <th>Nom complet</th>
+          <th>Rôle</th>
+          <th>Statut compte</th>
+          <th>Inscrit le</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in page_obj %}
+        <tr>
+          <td>
+            <input type="checkbox" name="ids" value="{{ user.id }}" form="form-bulk"
+                   class="row-check" style="accent-color:var(--accent-blue); cursor:pointer; width:15px; height:15px"/>
+          </td>
+          <td style="color:var(--text-muted)">{{ user.id }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.nom }} {{ user.prenom }}</td>
+          <td>
+            {% if user.role == "PATIENT" %}<span class="badge-role badge-patient">Patient</span>
+            {% elif user.role == "MEDECIN" %}<span class="badge-role badge-medecin">Médecin</span>
+            {% elif user.role == "ADMIN" %}<span class="badge-role badge-admin">Admin</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if user.statut %}<span class="badge-role badge-active">Actif</span>
+            {% else %}<span class="badge-role badge-inactive">Inactif</span>{% endif %}
+          </td>
+          <td style="color:var(--text-muted)">{{ user.date_joined|date:"d/m/Y" }}</td>
+          <td>
+            <div style="display:flex; gap:5px; flex-wrap:wrap">
+              <button class="btn-ms btn-warning btn-sm"
+                onclick="openRoleModal({{ user.id }}, '{{ user.email }}', '{{ user.role }}')">
+                <i class="bi bi-pencil"></i> Rôle
+              </button>
+              <form method="post" action="{% url 'admin_panel:toggle_user_status' user.id %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-ms btn-sm {% if user.statut %}btn-danger{% else %}btn-success{% endif %}">
+                  <i class="bi bi-{% if user.statut %}lock{% else %}unlock{% endif %}"></i>
+                  {% if user.statut %}Désactiver{% else %}Activer{% endif %}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Footer : total sélectionnés + pagination -->
+    <div style="padding:12px 16px; border-top:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:12px; color:var(--text-muted)">
+        Affichage de {{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ page_obj.paginator.count }} entrées
+      </span>
+      {% if page_obj.has_other_pages %}
+      <div class="ms-pagination">
+        <a href="?page=1&q={{ request.GET.q }}&role={{ request.GET.role }}&statut={{ request.GET.statut }}&per_page={{ per_page }}" {% if not page_obj.has_previous %}style="opacity:.4;pointer-events:none"{% endif %}>«</a>
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}&statut={{ request.GET.statut }}&per_page={{ per_page }}"><i class="bi bi-chevron-left"></i></a>
+        {% endif %}
+        <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}&statut={{ request.GET.statut }}&per_page={{ per_page }}"><i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+        <a href="?page={{ page_obj.paginator.num_pages }}&q={{ request.GET.q }}&role={{ request.GET.role }}&statut={{ request.GET.statut }}&per_page={{ per_page }}" {% if not page_obj.has_next %}style="opacity:.4;pointer-events:none"{% endif %}>»</a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% else %}
+    <div class="empty-state"><i class="bi bi-person-x"></i>Aucun utilisateur trouvé</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block modal %}
+<!-- Modal changement de rôle -->
+<div class="ms-modal-backdrop" id="modal-role">
+  <div class="ms-modal">
+    <h3><i class="bi bi-pencil-square" style="color:var(--accent-yellow)"></i> Changer le rôle</h3>
+    <form method="post" action="{% url 'admin_panel:change_role' 0 %}" id="form-role">
+      {% csrf_token %}
+      <div style="margin-bottom:14px">
+        <label>Utilisateur</label>
+        <div id="role-user-email" style="color:var(--text-primary); font-size:14px; padding:6px 0"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label>Nouveau rôle</label>
+        <select name="role" class="ms-form-control" id="role-select">
+          <option value="PATIENT">Patient</option>
+          <option value="MEDECIN">Médecin</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end">
+        <button type="button" class="btn-ms btn-ghost" onclick="closeModal('modal-role')">Annuler</button>
+        <button type="submit" class="btn-ms btn-warning"><i class="bi bi-check2"></i> Confirmer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal nouvel utilisateur -->
+<div class="ms-modal-backdrop" id="modal-create-user">
+  <div class="ms-modal">
+    <h3><i class="bi bi-person-plus" style="color:var(--accent-blue)"></i> Créer un utilisateur</h3>
+    <form method="post" action="{% url 'admin_panel:create_user' %}">
+      {% csrf_token %}
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+        <div><label>Nom</label><input type="text" name="nom" class="ms-form-control" required/></div>
+        <div><label>Prénom</label><input type="text" name="prenom" class="ms-form-control" required/></div>
+      </div>
+      <div style="margin-bottom:10px"><label>Email</label><input type="email" name="email" class="ms-form-control" required/></div>
+      <div style="margin-bottom:10px"><label>Mot de passe</label><input type="password" name="password" class="ms-form-control" required minlength="8"/></div>
+      <div style="margin-bottom:16px">
+        <label>Rôle</label>
+        <select name="role" class="ms-form-control">
+          <option value="PATIENT">Patient</option>
+          <option value="MEDECIN">Médecin</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end">
+        <button type="button" class="btn-ms btn-ghost" onclick="closeModal('modal-create-user')">Annuler</button>
+        <button type="submit" class="btn-ms btn-primary"><i class="bi bi-check2"></i> Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sélection tout
+const checkAll = document.getElementById('check-all');
+const rowChecks = document.querySelectorAll('.row-check');
+const countEl = document.getElementById('selected-count');
+
+function updateCount() {
+  const n = document.querySelectorAll('.row-check:checked').length;
+  countEl.textContent = n;
+  countEl.style.color = n > 0 ? 'var(--accent-blue)' : 'var(--text-muted)';
+}
+
+checkAll.addEventListener('change', () => {
+  rowChecks.forEach(c => c.checked = checkAll.checked);
+  updateCount();
+});
+
+rowChecks.forEach(c => c.addEventListener('change', () => {
+  checkAll.checked = [...rowChecks].every(c => c.checked);
+  updateCount();
+}));
+
+function confirmBulk() {
+  const n = document.querySelectorAll('.row-check:checked').length;
+  const action = document.getElementById('bulk-select').value;
+  if (!action) { alert('Veuillez sélectionner une action.'); return false; }
+  if (n === 0) { alert('Aucun élément sélectionné.'); return false; }
+  return confirm(`Appliquer "${action}" sur ${n} utilisateur(s) ?`);
+}
+
+function openRoleModal(userId, email, currentRole) {
+  const form = document.getElementById('form-role');
+  form.action = form.action.replace(/\/\d+\/role\//, '/' + userId + '/role/');
+  document.getElementById('role-user-email').textContent = email;
+  document.getElementById('role-select').value = currentRole;
+  openModal('modal-role');
+}
+</script>
+{% endblock %}

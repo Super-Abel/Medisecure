@@ -1,0 +1,342 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Patients — MediSecure Admin{% endblock %}
+{% block page_title %}Gestion des patients{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span
+      ><i class="bi bi-person-heart" style="color: var(--accent-green)"></i>
+      Patients ({{ page_obj.paginator.count }})</span
+    >
+  </div>
+
+  <!-- Barre DataTable -->
+  <div
+    style="
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    "
+  >
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+      "
+    >
+      Afficher
+      <form method="get" id="form-per-page">
+        <select
+          name="per_page"
+          class="ms-form-control"
+          style="width: 70px; padding: 4px 8px"
+          onchange="document.getElementById('form-per-page').submit()"
+        >
+          {% for n in per_page_choices %}
+          <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>
+            {{ n }}
+          </option>
+          {% endfor %}
+        </select>
+      </form>
+      entrées
+    </div>
+
+    <!-- Action groupée -->
+    <form
+      method="post"
+      action="{% url 'admin_panel:bulk_action_patients' %}"
+      id="form-bulk"
+    >
+      {% csrf_token %}
+      <div
+        style="display: flex; align-items: center; gap: 8px; font-size: 13px"
+      >
+        <span style="color: var(--text-muted)">Appliquer sur les</span>
+        <strong
+          id="selected-count"
+          style="
+            color: var(--accent-green);
+            min-width: 16px;
+            text-align: center;
+          "
+          >0</strong
+        >
+        <span style="color: var(--text-muted)">sélectionnés</span>
+        <select
+          name="action"
+          class="ms-form-control"
+          style="width: 180px; padding: 4px 8px"
+          id="bulk-select"
+        >
+          <option value="">— Sélectionner —</option>
+          <option value="activate">Activer le compte</option>
+          <option value="deactivate">Désactiver le compte</option>
+        </select>
+        <button
+          type="submit"
+          class="btn-ms btn-warning"
+          onclick="return confirmBulk();"
+        >
+          <i class="bi bi-check2-all"></i> Appliquer
+        </button>
+      </div>
+    </form>
+
+    <form method="get" style="display: flex; align-items: center; gap: 8px">
+      <input type="hidden" name="per_page" value="{{ per_page }}" />
+      <span style="font-size: 13px; color: var(--text-muted)"
+        >Rechercher :</span
+      >
+      <input
+        type="text"
+        name="q"
+        value="{{ request.GET.q }}"
+        placeholder="Email, nom..."
+        class="ms-form-control"
+        style="width: 220px; padding: 5px 10px"
+      />
+      <button type="submit" class="btn-ms btn-ghost btn-sm">
+        <i class="bi bi-search"></i>
+      </button>
+      <a href="{% url 'admin_panel:patients' %}" class="btn-ms btn-ghost btn-sm"
+        ><i class="bi bi-x"></i
+      ></a>
+    </form>
+  </div>
+
+  <div class="panel-body">
+    {% if page_obj %}
+    <table class="ms-table">
+      <thead>
+        <tr>
+          <th style="width: 36px">
+            <input
+              type="checkbox"
+              id="check-all"
+              style="
+                accent-color: var(--accent-green);
+                cursor: pointer;
+                width: 15px;
+                height: 15px;
+              "
+            />
+          </th>
+          <th>#</th>
+          <th>Nom complet</th>
+          <th>Infos</th>
+          <th>Statut</th>
+          <th>Dossier médical</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+        <tr>
+          <td>
+            <input
+              type="checkbox"
+              name="ids"
+              value="{{ p.id }}"
+              form="form-bulk"
+              class="row-check"
+              style="
+                accent-color: var(--accent-green);
+                cursor: pointer;
+                width: 15px;
+                height: 15px;
+              "
+            />
+          </td>
+          <td style="color: var(--text-muted)">{{ p.id }}</td>
+          <td>
+            <strong>{{ p.user.nom }} {{ p.user.prenom }}</strong>
+          </td>
+          <td
+            style="font-size: 12px; line-height: 1.7; color: var(--text-muted)"
+          >
+            Email : {{ p.user.email }}<br />
+            <!-- prettier-ignore -->
+            {% if p.date_naissance %}Né(e) le : {{ p.date_naissance|date:"d/m/Y" }}<br />{% endif %}
+            <!-- prettier-ignore -->
+            {% if p.sexe %}Sexe : {{ p.sexe }}<br />{% endif %}
+            <!-- prettier-ignore -->
+            {% if p.adresse %}{{ p.adresse|truncatechars:40 }}{% endif %}
+          </td>
+          <td>
+            <!-- prettier-ignore -->
+            {% if p.user.statut %}<span class="badge-role badge-active">Actif</span>{% else %}<span class="badge-role badge-inactive">Inactif</span>{% endif %}
+          </td>
+          <td>
+            <!-- prettier-ignore -->
+            {% if p.dossier %}<span class="badge-role badge-medecin"><i class="bi bi-folder-check"></i> Présent</span>{% else %}<span class="badge-role badge-inactive"><i class="bi bi-folder-x"></i> Absent</span>{% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap">
+              <button
+                class="btn-ms btn-warning btn-sm"
+                onclick="openEditPatientModal('{{ p.id }}', '{{ p.user.nom }}', '{{ p.user.prenom }}', '{{ p.date_naissance|date:'Y-m-d' }}', '{{ p.sexe }}', '{{ p.adresse|escapejs }}')"
+              >
+                <i class="bi bi-pencil"></i> Éditer
+              </button>
+              <form
+                method="post"
+                action="{% url 'admin_panel:toggle_user_status' p.user.id %}"
+                style="display: inline"
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="btn-ms btn-sm {% if p.user.statut %}btn-danger{% else %}btn-success{% endif %}"
+                >
+                  <i
+                    class="bi bi-{% if p.user.statut %}lock{% else %}unlock{% endif %}"
+                  ></i>
+                  {% if p.user.statut %}Désactiver{% else %}Activer{% endif %}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block modal %}
+<div class="ms-modal-backdrop" id="modal-edit-patient">
+  <div class="ms-modal">
+    <h3>
+      <i class="bi bi-pencil-square" style="color: var(--accent-green)"></i>
+      Éditer Patient
+    </h3>
+    <form method="post" action="" id="form-edit-patient">
+      {% csrf_token %}
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 10px;
+        "
+      >
+        <div>
+          <label>Nom</label
+          ><input
+            type="text"
+            name="nom"
+            id="edit-p-nom"
+            class="ms-form-control"
+            required
+          />
+        </div>
+        <div>
+          <label>Prénom</label
+          ><input
+            type="text"
+            name="prenom"
+            id="edit-p-prenom"
+            class="ms-form-control"
+            required
+          />
+        </div>
+      </div>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 10px;
+        "
+      >
+        <div>
+          <label>Date de naissance</label
+          ><input
+            type="date"
+            name="date_naissance"
+            id="edit-p-date"
+            class="ms-form-control"
+          />
+        </div>
+        <div>
+          <label>Sexe</label>
+          <select name="sexe" id="edit-p-sexe" class="ms-form-control">
+            <option value="">— Sélectionner —</option>
+            <option value="M">Masculin</option>
+            <option value="F">Féminin</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom: 16px">
+        <label>Adresse</label>
+        <textarea
+          name="adresse"
+          id="edit-p-adresse"
+          class="ms-form-control"
+          rows="2"
+        ></textarea>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end">
+        <button
+          type="button"
+          class="btn-ms btn-ghost"
+          onclick="closeModal('modal-edit-patient')"
+        >
+          Annuler
+        </button>
+        <button type="submit" class="btn-ms btn-primary">
+          <i class="bi bi-check2"></i> Enregistrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function openEditPatientModal(id, nom, prenom, date, sexe, adresse) {
+    const form = document.getElementById("form-edit-patient");
+    form.action = `/dashboard/patients/${id}/edit/`;
+    document.getElementById("edit-p-nom").value = nom;
+    document.getElementById("edit-p-prenom").value = prenom;
+    document.getElementById("edit-p-date").value = date;
+    document.getElementById("edit-p-sexe").value = sexe;
+    document.getElementById("edit-p-adresse").value = adresse;
+    openModal("modal-edit-patient");
+  }
+  const checkAll = document.getElementById("check-all");
+  const rowChecks = document.querySelectorAll(".row-check");
+  const countEl = document.getElementById("selected-count");
+  function updateCount() {
+    const n = document.querySelectorAll(".row-check:checked").length;
+    countEl.textContent = n;
+  }
+  checkAll.addEventListener("change", () => {
+    rowChecks.forEach((c) => (c.checked = checkAll.checked));
+    updateCount();
+  });
+  rowChecks.forEach((c) => c.addEventListener("change", updateCount));
+  function confirmBulk() {
+    const n = document.querySelectorAll(".row-check:checked").length;
+    const action = document.getElementById("bulk-select").value;
+    if (!action) {
+      alert("Sélectionnez une action.");
+      return false;
+    }
+    if (n === 0) {
+      alert("Aucun élément sélectionné.");
+      return false;
+    }
+    return confirm(`Appliquer "${action}" sur ${n} patient(s) ?`);
+  }
+</script>
+{% endblock %}

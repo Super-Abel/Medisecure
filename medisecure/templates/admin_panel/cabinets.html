@@ -1,0 +1,73 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Cabinets — MediSecure Admin{% endblock %}
+{% block page_title %}Cabinets médicaux{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-ms btn-primary" onclick="openModal('modal-add-cabinet')">
+  <i class="bi bi-plus-lg"></i> Ajouter
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span><i class="bi bi-building" style="color:var(--accent-blue)"></i> Cabinets ({{ cabinets.count }})</span>
+  </div>
+  <div class="panel-body">
+    {% if cabinets %}
+    <table class="ms-table">
+      <thead>
+        <tr><th>#</th><th>Nom</th><th>Adresse</th><th>Téléphone</th><th>Nb médecins</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for c in cabinets %}
+        <tr>
+          <td style="color:var(--text-muted)">{{ c.id }}</td>
+          <td><strong>{{ c.nom }}</strong></td>
+          <td style="color:var(--text-muted)">{{ c.adresse|default:"—"|truncatechars:50 }}</td>
+          <td style="color:var(--text-muted)">{{ c.telephone|default:"—" }}</td>
+          <td><span class="badge-role badge-medecin">{{ c.medecins.count }}</span></td>
+          <td>
+            <form method="post" action="{% url 'admin_panel:delete_cabinet' c.id %}" style="display:inline"
+                  onsubmit="return confirm('Supprimer ce cabinet ?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-ms btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-building-x"></i>Aucun cabinet enregistré</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block modal %}
+<div class="ms-modal-backdrop" id="modal-add-cabinet">
+  <div class="ms-modal">
+    <h3><i class="bi bi-building-add" style="color:var(--accent-blue)"></i> Nouveau cabinet</h3>
+    <form method="post" action="{% url 'admin_panel:create_cabinet' %}">
+      {% csrf_token %}
+      <div style="margin-bottom:12px">
+        <label>Nom du cabinet</label>
+        <input type="text" name="nom" class="ms-form-control" required/>
+      </div>
+      <div style="margin-bottom:12px">
+        <label>Adresse</label>
+        <textarea name="adresse" class="ms-form-control" rows="2"></textarea>
+      </div>
+      <div style="margin-bottom:16px">
+        <label>Téléphone</label>
+        <input type="text" name="telephone" class="ms-form-control"/>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end">
+        <button type="button" class="btn-ms btn-ghost" onclick="closeModal('modal-add-cabinet')">Annuler</button>
+        <button type="submit" class="btn-ms btn-primary"><i class="bi bi-check2"></i> Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

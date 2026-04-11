@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Bienvenue sur MediSecure</title>
+  </head>
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    "
+  >
+    <div
+      style="
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <h2 style="color: #0b678f">Bienvenue sur MediSecure !</h2>
+      <p>Bonjour,</p>
+      <p>
+        Merci pour votre inscription. Pour activer votre compte et vérifier
+        votre adresse email, veuillez utiliser le code OTP ci-dessous :
+      </p>
+      <div style="text-align: center; margin: 30px 0">
+        <span
+          style="
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #333;
+            background: #eef2f5;
+            padding: 10px 20px;
+            border-radius: 5px;
+          "
+          >{{ otp }}</span
+        >
+      </div>
+      <p>Ou vous pouvez également cliquer sur le bouton suivant :</p>
+      <div style="text-align: center; margin: 20px 0">
+        <a
+          href="{{ verification_url }}"
+          style="
+            background-color: #0b678f;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            display: inline-block;
+            font-weight: bold;
+          "
+          >Activer mon compte</a
+        >
+      </div>
+      <p style="color: #ed844d; font-size: 14px">
+        <strong>Attention :</strong> Ce code expire dans 48 heures.
+      </p>
+      <p>Cordialement,<br />L'équipe MediSecure</p>
+    </div>
+  </body>
+</html>

@@ -1,31 +1,172 @@
-{% extends "base.html" %}
-{% load i18n %}
-{% block bodyclass %}bg-light{% endblock bodyclass %}
-
-{% block css %}{{ block.super }}{% endblock css %}
-{% block title %}
-  {% block head_title %}
-    {% trans "Sign In" %}
-  {% endblock head_title %}
-{% endblock title %}
-{% block body %}
-  <div class="d-flex justify-content-center h-100 py-4">
-    <div class="col-md-4 py-4 my-4 px-4">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                    aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-      {% block content %}
-      {% endblock content %}
-      {% block extra_body %}
-      {% endblock extra_body %}
-    </div>
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block head_title %}MediSecure{% endblock %} — MediSecure</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0d0d;
+      color: #f0f0f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+    .auth-brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-brand h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f0f0f0;
+      letter-spacing: 0.5px;
+    }
+    .auth-brand p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .auth-card {
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 32px;
+    }
+    .auth-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #f0f0f0;
+    }
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .auth-field input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #f0f0f0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.15s;
+    }
+    .auth-field input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: #1e1e1e;
+    }
+    .auth-field input::placeholder { color: #555; }
+    .auth-btn {
+      width: 100%;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .auth-btn:hover { background: #2563eb; }
+    .auth-links {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      border-top: 1px solid #1f1f1f;
+      padding-top: 16px;
+    }
+    .auth-links a { color: #3b82f6; text-decoration: none; }
+    .auth-links a:hover { text-decoration: underline; }
+    .auth-alert {
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-alert-error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+    .auth-alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+    .auth-alert-info    { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; }
+    /* allauth overrides */
+    .form-control {
+      width: 100%;
+      background: #1a1a1a !important;
+      border: 1px solid #2a2a2a !important;
+      color: #f0f0f0 !important;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .form-control:focus { outline: none; border-color: #3b82f6 !important; box-shadow: none !important; }
+    .btn-primary { background: #3b82f6; border-color: #3b82f6; font-weight: 600; width: 100%; padding: 11px; font-size: 14px; }
+    .btn-primary:hover { background: #2563eb; border-color: #2563eb; }
+    .form-check-input { accent-color: #3b82f6; }
+    .form-check-label { font-size: 13px; color: #888; }
+    label { font-size: 12px; color: #888; font-weight: 500; }
+    p { font-size: 13px; color: #888; }
+    a { color: #3b82f6; }
+    .alert { border-radius: 6px; font-size: 13px; }
+    .alert-error, .alert-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+    .alert-info    { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; }
+    .helptext, .form-text { font-size: 11px; color: #555; margin-top: 4px; }
+    ul.errorlist { list-style: none; padding: 0; margin: 4px 0 0; }
+    ul.errorlist li { color: #ef4444; font-size: 12px; }
+    .row { margin: 0; }
+    .col-sm-10 { padding: 0; width: 100%; max-width: 100%; }
+    .mb-3 { margin-bottom: 14px !important; }
+  </style>
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-brand">
+    <h1><i class="bi bi-shield-plus" style="color:#3b82f6"></i> MediSecure</h1>
+    <p>Plateforme sécurisée de gestion médicale</p>
   </div>
-{% endblock body %}
+
+  <div class="auth-card">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="auth-alert {% if message.tags == 'success' %}auth-alert-success{% elif message.tags == 'info' %}auth-alert-info{% else %}auth-alert-error{% endif %}">
+          <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'info' %}info-circle{% else %}exclamation-triangle{% endif %}"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+    {% block extra_body %}{% endblock %}
+  </div>
+
+  <div class="auth-links">
+    {% block auth_links %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>

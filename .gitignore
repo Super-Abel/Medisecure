@@ -278,3 +278,16 @@ webpack-stats.json
 .env
 .envs/*
 !.envs/.local/
+
+# Local database
+db.sqlite3
+db.sqlite3-journal
+
+# Temporary test artifacts
+screenshot_*.png
+dashboard_debug.png
+pytest_ascii.txt
+pytest_output.txt
+test_*.py
+count.py
+

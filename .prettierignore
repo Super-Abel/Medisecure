@@ -1,0 +1,3 @@
+# Ignore Django templates because Prettier breaks Django syntax
+**/*.html
+medisecure/templates/**/*.html

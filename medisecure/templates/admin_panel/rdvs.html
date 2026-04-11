@@ -1,0 +1,148 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Rendez-vous — MediSecure Admin{% endblock %}
+{% block page_title %}Rendez-vous{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span><i class="bi bi-calendar3" style="color:var(--accent-yellow)"></i> Rendez-vous ({{ page_obj.paginator.count }})</span>
+  </div>
+
+  <!-- Barre DataTable -->
+  <div style="padding:14px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted)">
+      Afficher
+      <form method="get" id="form-per-page">
+        <input type="hidden" name="statut" value="{{ request.GET.statut }}"/>
+        <select name="per_page" class="ms-form-control" style="width:70px; padding:4px 8px"
+                onchange="document.getElementById('form-per-page').submit()">
+          {% for n in per_page_choices %}
+            <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      entrées
+    </div>
+
+    <!-- Action groupée -->
+    <form method="post" action="{% url 'admin_panel:bulk_action_rdvs' %}" id="form-bulk">
+      {% csrf_token %}
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px">
+        <span style="color:var(--text-muted)">Appliquer sur les</span>
+        <strong id="selected-count" style="color:var(--accent-yellow); min-width:16px; text-align:center">0</strong>
+        <span style="color:var(--text-muted)">sélectionnés</span>
+        <select name="action" class="ms-form-control" style="width:180px; padding:4px 8px" id="bulk-select">
+          <option value="">— Sélectionner —</option>
+          <option value="cancel">Annuler</option>
+          <option value="confirm">Confirmer</option>
+          <option value="termine">Marquer terminé</option>
+        </select>
+        <button type="submit" class="btn-ms btn-warning" onclick="return confirmBulk()">
+          <i class="bi bi-check2-all"></i> Appliquer
+        </button>
+      </div>
+    </form>
+
+    <form method="get" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+      <input type="hidden" name="per_page" value="{{ per_page }}"/>
+      <span style="font-size:13px; color:var(--text-muted)">Statut :</span>
+      <select name="statut" class="ms-form-control" style="width:150px; padding:5px 8px">
+        <option value="">Tous</option>
+        <option value="EN_ATTENTE" {% if request.GET.statut == "EN_ATTENTE" %}selected{% endif %}>En attente</option>
+        <option value="CONFIRME"   {% if request.GET.statut == "CONFIRME"   %}selected{% endif %}>Confirmé</option>
+        <option value="ANNULE"     {% if request.GET.statut == "ANNULE"     %}selected{% endif %}>Annulé</option>
+        <option value="TERMINE"    {% if request.GET.statut == "TERMINE"    %}selected{% endif %}>Terminé</option>
+      </select>
+      <button type="submit" class="btn-ms btn-ghost btn-sm"><i class="bi bi-search"></i></button>
+      <a href="{% url 'admin_panel:rdvs' %}" class="btn-ms btn-ghost btn-sm"><i class="bi bi-x"></i></a>
+    </form>
+  </div>
+
+  <div class="panel-body">
+    {% if page_obj %}
+    <table class="ms-table">
+      <thead>
+        <tr>
+          <th style="width:36px"><input type="checkbox" id="check-all" style="accent-color:var(--accent-yellow); cursor:pointer; width:15px; height:15px"/></th>
+          <th>#</th>
+          <th>Patient</th>
+          <th>Médecin</th>
+          <th>Date & Heure</th>
+          <th>Motif</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rdv in page_obj %}
+        <tr>
+          <td><input type="checkbox" name="ids" value="{{ rdv.id }}" form="form-bulk" class="row-check" style="accent-color:var(--accent-yellow); cursor:pointer; width:15px; height:15px"/></td>
+          <td style="color:var(--text-muted)">{{ rdv.id }}</td>
+          <td>
+            <strong>{{ rdv.patient.user.nom }} {{ rdv.patient.user.prenom }}</strong><br/>
+            <span style="font-size:11px; color:var(--text-muted)">{{ rdv.patient.user.email }}</span>
+          </td>
+          <td>
+            Dr {{ rdv.medecin.user.nom }}<br/>
+            <span style="font-size:11px; color:var(--text-muted)">{% if rdv.medecin.specialite %}{{ rdv.medecin.specialite.nom_specialite }}{% endif %}</span>
+          </td>
+          <td style="white-space:nowrap">
+            {{ rdv.date_heure|date:"d/m/Y" }}<br/>
+            <span style="font-size:11px; color:var(--text-muted)">{{ rdv.date_heure|date:"H:i" }}</span>
+          </td>
+          <td style="color:var(--text-muted); font-size:12px">{{ rdv.motif|default:"—"|truncatechars:40 }}</td>
+          <td>
+            {% if rdv.statut == "EN_ATTENTE" %}<span class="badge-role badge-en-attente">En attente</span>
+            {% elif rdv.statut == "CONFIRME"  %}<span class="badge-role badge-confirme">Confirmé</span>
+            {% elif rdv.statut == "ANNULE"    %}<span class="badge-role badge-annule">Annulé</span>
+            {% elif rdv.statut == "TERMINE"   %}<span class="badge-role badge-termine">Terminé</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if rdv.statut == "EN_ATTENTE" %}
+            <form method="post" action="{% url 'admin_panel:cancel_rdv' rdv.id %}" style="display:inline"
+                  onsubmit="return confirm('Annuler ce RDV ?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-ms btn-danger btn-sm"><i class="bi bi-x-circle"></i> Annuler</button>
+            </form>
+            {% else %}<span style="color:var(--text-muted)">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="padding:12px 16px; border-top:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:12px; color:var(--text-muted)">Affichage de {{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ page_obj.paginator.count }} entrées</span>
+      {% if page_obj.has_other_pages %}
+      <div class="ms-pagination">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&statut={{ request.GET.statut }}&per_page={{ per_page }}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&statut={{ request.GET.statut }}&per_page={{ per_page }}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-calendar-x"></i>Aucun rendez-vous</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const checkAll = document.getElementById('check-all');
+const rowChecks = document.querySelectorAll('.row-check');
+const countEl = document.getElementById('selected-count');
+function updateCount() { countEl.textContent = document.querySelectorAll('.row-check:checked').length; }
+checkAll.addEventListener('change', () => { rowChecks.forEach(c => c.checked = checkAll.checked); updateCount(); });
+rowChecks.forEach(c => c.addEventListener('change', updateCount));
+function confirmBulk() {
+  const n = document.querySelectorAll('.row-check:checked').length;
+  const action = document.getElementById('bulk-select').value;
+  if (!action) { alert('Sélectionnez une action.'); return false; }
+  if (n === 0) { alert('Aucun élément sélectionné.'); return false; }
+  return confirm(`Appliquer "${action}" sur ${n} RDV ?`);
+}
+</script>
+{% endblock %}

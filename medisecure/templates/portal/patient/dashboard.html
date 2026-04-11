@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">
+      Bienvenue, {{ request.user.prenom }} !
+    </h1>
+    <p class="text-muted">Voici le récapitulatif de votre suivi médical.</p>
+  </div>
+</div>
+
+<div class="row g-4 mb-5">
+  <!-- Stat Cards -->
+  <div class="col-md-4">
+    <div class="ms-card h-100 border-start border-4 border-primary">
+      <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+          <i class="bi bi-calendar2-check text-primary fs-3"></i>
+        </div>
+        <div>
+          <h6 class="text-muted small mb-0">Prochain RDV</h6>
+          <p class="fs-5 fw-bold mb-0">
+            {% with rdv=rdv_recents.0 %}{% if rdv %}{{ rdv.date_heure|date:"d M Y" }}{% else %}Aucun{% endif %}{% endwith %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="ms-card h-100 border-start border-4 border-success">
+      <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+          <i class="bi bi-heart-pulse text-success fs-3"></i>
+        </div>
+        <div>
+          <h6 class="text-muted small mb-0">Statut Santé</h6>
+          <p class="fs-5 fw-bold mb-0">Stable</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="ms-card h-100 border-start border-4 border-warning">
+      <div class="d-flex align-items-center">
+        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+          <i class="bi bi-bell text-warning fs-3"></i>
+        </div>
+        <div>
+          <h6 class="text-muted small mb-0">Notifications</h6>
+          <p class="fs-5 fw-bold mb-0">2 nouvelles</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Appointments list -->
+  <div class="col-lg-8">
+    <div class="ms-card p-0 overflow-hidden">
+      <div class="card-header bg-transparent border-0 px-4 py-4 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Rendez-vous récents</h5>
+        <a href="#" class="ms-btn ms-btn-secondary btn-sm">Tout voir</a>
+      </div>
+      <div class="table-responsive">
+        <table class="ms-table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Médecin</th>
+              <th>Spécialité</th>
+              <th>Date & Heure</th>
+              <th class="text-end pe-4">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rdv in rdv_recents %}
+            <tr>
+              <td class="ps-4">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.8rem;">
+                    {{ rdv.medecin.user.prenom|first }}
+                  </div>
+                  <span class="fw-semibold text-primary">Dr. {{ rdv.medecin.user.nom }} {{ rdv.medecin.user.prenom }}</span>
+                </div>
+              </td>
+              <td class="small">{{ rdv.medecin.specialite }}</td>
+              <td class="small">{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+              <td class="text-end pe-4">
+                <span class="badge rounded-pill {% if rdv.statut == 'CONFIRME' %}bg-success-subtle text-success{% elif rdv.statut == 'ANNULE' %}bg-danger-subtle text-danger{% else %}bg-warning-subtle text-warning{% endif %} px-3 py-2">
+                  {{ rdv.get_statut_display }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted">
+                <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                <p class="small mb-0">Aucun rendez-vous trouvé.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div class="col-lg-4">
+    <!-- Quick Booking -->
+    <div class="ms-card">
+      <h5 class="fw-bold mb-3">Reprendre RDV ?</h5>
+      <p class="text-muted small">
+        Trouvez rapidement une disponibilité avec vos praticiens favoris.
+      </p>
+      <div class="list-group list-group-flush mb-3">
+        {% for rdv in rdv_recents|slice:":2" %}
+        <button class="list-group-item list-group-item-action border-0 px-0 py-3 bg-transparent">
+          <div class="d-flex w-100 justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-person-plus text-primary me-2"></i>
+              <span class="small fw-bold">Dr. {{ rdv.medecin.user.nom }}</span>
+            </div>
+            <span class="badge bg-primary bg-opacity-10 text-primary">Prendre RDV</span>
+          </div>
+        </button>
+        {% endfor %}
+      </div>
+      <button class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
+        Nouveau Rendez-vous
+      </button>
+    </div>
+
+    <!-- Dossier Médical Summary -->
+    <div class="ms-card text-center">
+      <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
+        <i class="bi bi-file-earmark-medical text-primary fs-2"></i>
+      </div>
+      <h5 class="fw-bold">Dossier Médical</h5>
+      <p class="text-muted small">
+        Vos antécédents, allergies et documents de santé en un coup d'œil.
+      </p>
+      <a href="#" class="ms-btn ms-btn-secondary w-100 justify-content-center">Accéder au dossier</a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,82 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Logs — MediSecure Admin{% endblock %}
+{% block page_title %}Logs d'activité{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span><i class="bi bi-journal-text" style="color:var(--accent-red)"></i> Logs ({{ page_obj.paginator.count }})</span>
+    <span style="font-size:11px; color:var(--text-muted); font-weight:400"><i class="bi bi-lock"></i> Lecture seule</span>
+  </div>
+
+  <!-- Barre DataTable -->
+  <div style="padding:14px 16px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted)">
+      Afficher
+      <form method="get" id="form-per-page">
+        <input type="hidden" name="q" value="{{ request.GET.q }}"/>
+        <input type="hidden" name="date_from" value="{{ request.GET.date_from }}"/>
+        <input type="hidden" name="date_to" value="{{ request.GET.date_to }}"/>
+        <select name="per_page" class="ms-form-control" style="width:70px; padding:4px 8px"
+                onchange="document.getElementById('form-per-page').submit()">
+          {% for n in per_page_choices %}
+            <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      entrées
+    </div>
+
+    <form method="get" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+      <input type="hidden" name="per_page" value="{{ per_page }}"/>
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Action, email..." class="ms-form-control" style="width:220px; padding:5px 10px"/>
+      <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="ms-form-control" style="width:150px; padding:5px 8px"/>
+      <span style="color:var(--text-muted); font-size:12px">→</span>
+      <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="ms-form-control" style="width:150px; padding:5px 8px"/>
+      <button type="submit" class="btn-ms btn-ghost btn-sm"><i class="bi bi-search"></i></button>
+      <a href="{% url 'admin_panel:logs' %}" class="btn-ms btn-ghost btn-sm"><i class="bi bi-x"></i></a>
+    </form>
+  </div>
+
+  <div class="panel-body">
+    {% if page_obj %}
+    <table class="ms-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Utilisateur</th>
+          <th>Action</th>
+          <th>Adresse IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in page_obj %}
+        <tr>
+          <td style="white-space:nowrap">
+            {{ log.date_action|date:"d/m/Y" }}<br/>
+            <span style="font-size:11px; color:var(--text-muted)">{{ log.date_action|date:"H:i:s" }}</span>
+          </td>
+          <td>{{ log.utilisateur.email }}</td>
+          <td>{{ log.action }}</td>
+          <td style="color:var(--text-muted); font-family:monospace; font-size:12px">{{ log.adresse_ip|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="padding:12px 16px; border-top:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:12px; color:var(--text-muted)">Affichage de {{ page_obj.start_index }}–{{ page_obj.end_index }} sur {{ page_obj.paginator.count }} entrées</span>
+      {% if page_obj.has_other_pages %}
+      <div class="ms-pagination">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&q={{ request.GET.q }}&date_from={{ request.GET.date_from }}&date_to={{ request.GET.date_to }}"><i class="bi bi-chevron-left"></i></a>{% endif %}
+        <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&q={{ request.GET.q }}&date_from={{ request.GET.date_from }}&date_to={{ request.GET.date_to }}"><i class="bi bi-chevron-right"></i></a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-journal-x"></i>Aucun log disponible</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

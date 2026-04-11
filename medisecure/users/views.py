@@ -10,7 +10,7 @@ from django.views.generic import DetailView
 from django.views.generic import RedirectView
 from django.views.generic import UpdateView
 
-from medisecure.users.models import User
+from medisecure.users.models import User, Roles
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -46,7 +46,14 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self) -> str:
-        return reverse("users:detail", kwargs={"pk": self.request.user.pk})
+        user = self.request.user
+        if user.role == Roles.PATIENT:
+            return reverse("portal:patient-dashboard")
+        elif user.role == Roles.MEDECIN:
+            return reverse("portal:doctor-dashboard")
+        elif user.is_staff or user.role == Roles.ADMIN:
+            return reverse("admin_panel:dashboard")
+        return reverse("users:detail", kwargs={"pk": user.pk})
 
 
 user_redirect_view = UserRedirectView.as_view()

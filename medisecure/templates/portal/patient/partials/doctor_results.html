@@ -1,0 +1,24 @@
+{% for doc in medecins %}
+<div class="col-md-6 col-lg-4">
+  <div class="ms-card h-100 text-center">
+    <div class="avatar-lg rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 800;">
+      {{ doc.user.prenom|first }}{{ doc.user.nom|first }}
+    </div>
+    <h5 class="fw-bold mb-1">Dr. {{ doc.user.prenom }} {{ doc.user.nom }}</h5>
+    <p class="text-primary fw-medium small mb-2">
+      {{ doc.specialite.nom_specialite }}
+    </p>
+    <p class="text-muted small mb-4">
+      <i class="bi bi-geo-alt me-1"></i>{{ doc.cabinet.nom }}
+    </p>
+    <a href="{% url 'portal:booking-confirm' doc.id %}" class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
+      Choisir un créneau
+    </a>
+  </div>
+</div>
+{% empty %}
+<div class="col-12 py-5 text-center text-muted animate-up">
+  <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
+  <p class="fs-5">Aucun praticien ne correspond à cette recherche.</p>
+</div>
+{% endfor %}

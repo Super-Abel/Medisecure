@@ -21,6 +21,10 @@ urlpatterns = [
     # User management
     path("users/", include("medisecure.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # Admin Panel
+    path("dashboard/", include("medisecure.users.panel_urls", namespace="admin_panel")),
+    # Portals (Patient/Doctor)
+    path("portal/", include("medisecure.portal.urls", namespace="portal")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

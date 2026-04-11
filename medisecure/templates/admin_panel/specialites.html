@@ -1,0 +1,68 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Spécialités — MediSecure Admin{% endblock %}
+{% block page_title %}Spécialités médicales{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn-ms btn-primary" onclick="openModal('modal-add-spec')">
+  <i class="bi bi-plus-lg"></i> Ajouter
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-header">
+    <span><i class="bi bi-bookmark-star" style="color:var(--accent-blue)"></i> Spécialités ({{ specialites.count }})</span>
+  </div>
+  <div class="panel-body">
+    {% if specialites %}
+    <table class="ms-table">
+      <thead>
+        <tr><th>#</th><th>Spécialité</th><th>Description</th><th>Nb médecins</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in specialites %}
+        <tr>
+          <td style="color:var(--text-muted)">{{ s.id }}</td>
+          <td><strong>{{ s.nom_specialite }}</strong></td>
+          <td style="color:var(--text-muted)">{{ s.description|default:"—"|truncatechars:60 }}</td>
+          <td><span class="badge-role badge-medecin">{{ s.medecins.count }}</span></td>
+          <td>
+            <form method="post" action="{% url 'admin_panel:delete_specialite' s.id %}" style="display:inline"
+                  onsubmit="return confirm('Supprimer cette spécialité ?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-ms btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><i class="bi bi-bookmark-x"></i>Aucune spécialité</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block modal %}
+<div class="ms-modal-backdrop" id="modal-add-spec">
+  <div class="ms-modal">
+    <h3><i class="bi bi-bookmark-plus" style="color:var(--accent-blue)"></i> Nouvelle spécialité</h3>
+    <form method="post" action="{% url 'admin_panel:create_specialite' %}">
+      {% csrf_token %}
+      <div style="margin-bottom:12px">
+        <label>Nom de la spécialité</label>
+        <input type="text" name="nom_specialite" class="ms-form-control" required/>
+      </div>
+      <div style="margin-bottom:16px">
+        <label>Description (optionnel)</label>
+        <textarea name="description" class="ms-form-control" rows="3"></textarea>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end">
+        <button type="button" class="btn-ms btn-ghost" onclick="closeModal('modal-add-spec')">Annuler</button>
+        <button type="submit" class="btn-ms btn-primary"><i class="bi bi-check2"></i> Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

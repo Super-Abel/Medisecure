@@ -76,4 +76,5 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # ------------------------------------------------------------------------------
 WEBPACK_LOADER["DEFAULT"]["CACHE"] = not DEBUG
 # Your stuff...
+ACCOUNT_EMAIL_VERIFICATION = "none"
 # ------------------------------------------------------------------------------
