@@ -350,7 +350,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "MediSecure API",
     "DESCRIPTION": "Documentation of API endpoints of MediSecure",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
     "SCHEMA_PATH_PREFIX": "/api/",
 }
 # django-webpack-loader
