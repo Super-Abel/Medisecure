@@ -45,7 +45,7 @@ user_update_view = UserUpdateView.as_view()
 class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 
-    def get_redirect_url(self) -> str:
+    def get_redirect_url(self, *args, **kwargs) -> str:
         user = self.request.user
         if user.role == Roles.PATIENT:
             return reverse("portal:patient-dashboard")

@@ -154,12 +154,15 @@ class PatientRegistrationView(APIView):
             telephone=d.get("telephone", ""),
             role="PATIENT",
         )
-        Patient.objects.create(
+        patient = Patient.objects.create(
             user=user,
             date_naissance=d.get("date_naissance"),
             sexe=d.get("sexe", ""),
             adresse=d.get("adresse", ""),
         )
+        from medisecure.medical.models import DossierMedical
+
+        DossierMedical.objects.create(patient=patient)
         service = AuthService(DjangoUserRepository(), DjangoLogRepository())
         service.send_verification_email(user.id, user.email)
 
