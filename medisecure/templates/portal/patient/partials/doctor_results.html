@@ -1,24 +1,31 @@
 {% for doc in medecins %}
-<div class="col-md-6 col-lg-4">
-  <div class="ms-card h-100 text-center">
-    <div class="avatar-lg rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 800;">
+<div class="col-12 col-md-6">
+  <div class="ms-card d-flex align-items-center gap-3 p-3 bg-white" style="border-radius: 16px; border: 1px solid #e5e9ef; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: 800;">
       {{ doc.user.prenom|first }}{{ doc.user.nom|first }}
     </div>
-    <h5 class="fw-bold mb-1">Dr. {{ doc.user.prenom }} {{ doc.user.nom }}</h5>
-    <p class="text-primary fw-medium small mb-2">
-      {{ doc.specialite.nom_specialite }}
-    </p>
-    <p class="text-muted small mb-4">
-      <i class="bi bi-geo-alt me-1"></i>{{ doc.cabinet.nom }}
-    </p>
-    <a href="{% url 'portal:booking-confirm' doc.id %}" class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
-      Choisir un créneau
-    </a>
+    <div class="flex-grow-1">
+      <h6 class="fw-bold mb-1" style="color: #1e293b; font-size: 15px;">Dr. {{ doc.user.prenom }} {{ doc.user.nom }}</h6>
+      <p class="text-success fw-bold small mb-1" style="font-size: 12px;">
+        {{ doc.specialite.nom_specialite }}
+      </p>
+      <p class="text-muted small mb-0" style="font-size: 11px;">
+        <i class="bi bi-geo-alt me-1"></i>{{ doc.cabinet.nom }}
+      </p>
+    </div>
+    <div>
+      <a href="{% url 'portal:booking-confirm' doc.id %}" class="btn btn-sm btn-success rounded-pill px-3" style="font-weight: 600; font-size: 12px;">
+        Choisir
+      </a>
+    </div>
   </div>
 </div>
 {% empty %}
-<div class="col-12 py-5 text-center text-muted animate-up">
-  <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
-  <p class="fs-5">Aucun praticien ne correspond à cette recherche.</p>
+<div class="col-12 py-5 text-center text-muted">
+  <div class="mb-3">
+    <i class="bi bi-search" style="font-size: 3rem; color: #cbd5e1;"></i>
+  </div>
+  <h6 class="fw-bold mb-1">Aucun spécialiste trouvé</h6>
+  <p class="small">Essayez de modifier vos critères de recherche.</p>
 </div>
 {% endfor %}

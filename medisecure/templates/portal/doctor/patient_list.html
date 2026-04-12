@@ -7,47 +7,42 @@
   </div>
 </div>
 
+<style>
+  .list-card { background:#fff; border-radius:16px; border:1px solid #e5e9ef; overflow:hidden; margin-bottom:16px; }
+  .list-item { display:flex; align-items:center; padding:16px 20px; gap:16px; border-bottom:1px solid #f1f5f9; transition:0.15s; text-decoration:none; color:inherit; }
+  .list-item:last-child { border-bottom:none; }
+  .list-item:hover { background:#f8fafc; }
+  .li-avatar { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; font-weight:700; }
+  .li-body { flex:1; min-width:0; }
+  .li-name { font-size:16px; font-weight:700; color:#1e293b; margin-bottom:2px; }
+  .li-sub { font-size:13px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .li-right { text-align:right; flex-shrink:0; }
+  .badge-blue { background:#eff6ff; color:#1a56db; padding:6px 16px; border-radius:12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid #dbeafe; transition:0.2s;}
+  .badge-blue:hover { background:#1a56db; color:#fff; }
+</style>
+
 <div class="row">
   <div class="col-12">
-    <div class="ms-card p-0 overflow-hidden">
-      <div class="table-responsive">
-        <table class="ms-table mb-0">
-          <thead>
-            <tr>
-              <th class="ps-4">Patient</th>
-              <th>Email</th>
-              <th class="text-end pe-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for patient in patients %}
-            <tr>
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.8rem;">
-                    {{ patient.user.prenom|first }}
-                  </div>
-                  <span class="fw-semibold">{{ patient.user.prenom }} {{ patient.user.nom }}</span>
-                </div>
-              </td>
-              <td class="small">{{ patient.user.email }}</td>
-              <td class="text-end pe-4">
-                <a href="{% url 'portal:doctor-dossier' patient.id %}" class="ms-btn ms-btn-secondary btn-sm">
-                  Éditer Dossier
-                </a>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="3" class="text-center py-5 text-muted">
-                <i class="bi bi-person-x fs-1 d-block mb-2"></i>
-                <p class="small mb-0">Aucun patient récent.</p>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <div class="list-card">
+      {% for patient in patients %}
+      <a href="{% url 'portal:doctor-dossier' patient.id %}" class="list-item">
+        <div class="li-avatar" style="background:#dcfce7; color:#16a34a;">
+          {{ patient.user.prenom|first }}{{ patient.user.nom|first }}
+        </div>
+        <div class="li-body">
+          <div class="li-name">{{ patient.user.prenom }} {{ patient.user.nom }}</div>
+          <div class="li-sub">Patient(e) · {{ patient.user.email }}</div>
+        </div>
+        <div class="li-right">
+          <span class="badge-blue">Éditer Dossier</span>
+        </div>
+      </a>
+      {% empty %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-person-x d-block mb-3" style="font-size:3rem; color:#cbd5e1;"></i>
+        <p class="mb-0 fw-bold">Aucun patient affecté pour le moment.</p>
       </div>
+      {% endfor %}
     </div>
   </div>
 </div>

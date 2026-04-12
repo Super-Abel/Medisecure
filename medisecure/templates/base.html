@@ -100,7 +100,50 @@
       {% endfor %} {% endif %} {% block main %} {% block content %}{% endblock content %} {% endblock main %}
     </div>
 
-    <footer class="ms-footer mt-5">
+    {% if request.user.is_authenticated %}
+    <nav class="navbar fixed-bottom bg-white border-top shadow d-flex justify-content-around py-2 pb-3 mx-auto mb-3" style="z-index: 1050; border-radius: 30px; max-width: 500px;">
+      <a href="{% url 'portal:doctor-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:doctor-dashboard' or request.resolver_match.view_name == 'portal:patient-dashboard' or request.path == '/' %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-house-door fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Accueil</div>
+      </a>
+      {% if request.user.role == 'PATIENT' %}
+      <a href="{% url 'portal:patient-booking' %}" class="text-center text-decoration-none {% if 'booking' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-calendar-plus fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">RDV</div>
+      </a>
+      <a href="{% url 'portal:patient-dossier' %}" class="text-center text-decoration-none {% if 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-clipboard2-pulse fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Dossier</div>
+      </a>
+      {% elif request.user.role == 'MEDECIN' %}
+      <a href="{% url 'portal:doctor-patients' %}" class="text-center text-decoration-none {% if 'patients' in request.path and not 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-people fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Patients</div>
+      </a>
+      <a href="{% url 'portal:doctor-planning' %}" class="text-center text-decoration-none {% if 'planning' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-calendar-event fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Planning</div>
+      </a>
+      <a href="{% url 'portal:doctor-patients' %}" class="text-center text-decoration-none {% if 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-folder2-open fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Dossiers</div>
+      </a>
+      {% endif %}
+      <a href="{% if request.user.role == 'MEDECIN' %}{% url 'portal:doctor-notifications' %}{% else %}#{% endif %}" class="text-center text-decoration-none {% if 'notifications' in request.path %}text-primary{% else %}text-muted{% endif %} position-relative">
+        <i class="bi bi-bell fs-5"></i>
+        <!-- You can make the notification dot dynamic using JS later -->
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="navUnreadDot" style="display:none;"></span>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Notifs</div>
+      </a>
+      <a href="{% url 'users:detail' request.user.pk %}" class="text-center text-decoration-none {% if request.resolver_match.url_name == 'detail' %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-person-circle fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Profil</div>
+      </a>
+    </nav>
+    <style>body { padding-bottom: 80px; }</style>
+    {% endif %}
+
+    <footer class="ms-footer mt-5 pb-5">
       <div class="container">
         <div class="row">
           <div class="col-lg-4 mb-4">

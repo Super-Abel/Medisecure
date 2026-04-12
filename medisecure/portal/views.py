@@ -1,5 +1,7 @@
 from django.shortcuts import render
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
 from django.views.generic import TemplateView, ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from medisecure.users.models import Roles, Medecin, Patient
@@ -28,6 +30,17 @@ class PatientDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class PatientDossierView(LoginRequiredMixin, TemplateView):
+    template_name = "portal/patient/dossier.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if hasattr(user, "patient_profile"):
+            context["patient"] = user.patient_profile
+        return context
+
+
 class DoctorDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "portal/doctor/dashboard.html"
 
@@ -38,10 +51,40 @@ class DoctorDashboardView(LoginRequiredMixin, TemplateView):
         if hasattr(user, "medecin_profile"):
             medecin = user.medecin_profile
             context["medecin"] = medecin
-            aujourd_hui = timezone.now().date()
-            context["rdv_jour"] = RendezVous.objects.filter(
-                medecin=medecin, date_heure__date=aujourd_hui
-            ).order_by("date_heure")
+
+            # Allow date filtering via query param for testing and future planning
+            date_str = self.request.GET.get("date")
+            if date_str:
+                from datetime import datetime
+
+                try:
+                    display_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    display_date = timezone.now().date()
+            else:
+                display_date = timezone.now().date()
+
+            rdvs_jour = RendezVous.objects.filter(
+                medecin=medecin, date_heure__date=display_date
+            )
+            context["rdv_jour"] = rdvs_jour.order_by("date_heure")
+            context["display_date"] = display_date
+
+            # Dynamic stats (for the selected day)
+            context["patients_today"] = rdvs_jour.values("patient").distinct().count()
+
+            rdvs_mois = RendezVous.objects.filter(
+                medecin=medecin,
+                date_heure__month=display_date.month,
+                date_heure__year=display_date.year,
+            )
+            context["rdv_month"] = rdvs_mois.count()
+            context["rdv_pending"] = rdvs_mois.filter(
+                statut=StatutRDV.EN_ATTENTE
+            ).count()
+            context["rdv_confirmed"] = rdvs_mois.filter(
+                statut=StatutRDV.CONFIRME
+            ).count()
 
         return context
 
@@ -121,16 +164,45 @@ class DoctorDossierUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class ConsultationFinishView(LoginRequiredMixin, UpdateView):
-    model = RendezVous
-    fields = []
-    success_url = reverse_lazy("portal:doctor-dashboard")
-
+class ConsultationFinishView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        rdv = self.get_object()
+        from django.shortcuts import get_object_or_404, redirect
+
+        rdv = get_object_or_404(RendezVous, id=self.kwargs.get("rdv_id"))
         rdv.statut = StatutRDV.TERMINE
         rdv.save()
-        return super().post(request, *args, **kwargs)
+        messages.success(request, "Consultation terminée avec succès.")
+        return redirect("portal:doctor-dashboard")
 
-    def get_object(self, queryset=None):
-        return RendezVous.objects.get(id=self.kwargs.get("rdv_id"))
+
+class DoctorPlanningView(LoginRequiredMixin, TemplateView):
+    template_name = "portal/doctor/planning.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from datetime import timedelta
+
+        DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+        today = timezone.now().date()
+        week_start = today - timedelta(days=today.weekday())
+        context["week_days"] = [
+            {
+                "label": DAYS_FR[(week_start + timedelta(days=i)).weekday()],
+                "num": (week_start + timedelta(days=i)).day,
+                "is_today": (week_start + timedelta(days=i)) == today,
+            }
+            for i in range(7)
+        ]
+        if hasattr(self.request.user, "medecin_profile"):
+            context["rdvs"] = RendezVous.objects.filter(
+                medecin=self.request.user.medecin_profile
+            ).order_by("date_heure")
+        return context
+
+
+class DoctorMessagesView(LoginRequiredMixin, TemplateView):
+    template_name = "portal/doctor/messages.html"
+
+
+class DoctorNotificationsView(LoginRequiredMixin, TemplateView):
+    template_name = "portal/doctor/notifications.html"

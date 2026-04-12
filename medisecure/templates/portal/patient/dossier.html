@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Dossier Médical - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">
+      <i class="bi bi-folder-heart text-primary me-2"></i>Mon Dossier Médical
+    </h1>
+    <p class="text-muted">Retrouvez toutes vos prescriptions, consultations et résultats d'analyses.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-3 mb-4">
+    <div class="ms-card sticky-top" style="top: 20px;">
+      <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+        <button class="nav-link text-start active mb-2 fw-bold" id="tab-prescriptions-tab" data-bs-toggle="pill" data-bs-target="#tab-prescriptions" type="button" role="tab">💊 Prescriptions</button>
+        <button class="nav-link text-start mb-2 fw-bold" id="tab-consultations-tab" data-bs-toggle="pill" data-bs-target="#tab-consultations" type="button" role="tab">🩺 Consultations</button>
+        <button class="nav-link text-start mb-2 fw-bold" id="tab-resultats-tab" data-bs-toggle="pill" data-bs-target="#tab-resultats" type="button" role="tab">🔬 Résultats d'analyses</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <div id="loadingSpinner" class="text-center py-5 d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+
+    <div class="tab-content" id="v-pills-tabContent">
+      <!-- PRESCRIPTIONS -->
+      <div class="tab-pane fade show active" id="tab-prescriptions" role="tabpanel">
+        <div class="ms-card bg-primary bg-opacity-10 border-0 mb-4 px-4 py-4 d-flex justify-content-between align-items-center">
+          <h4 class="mb-0 fw-bold text-primary">Prescriptions actives et passées</h4>
+        </div>
+        <div id="prescriptionsContainer" class="row g-3">
+          <!-- Inject JS -->
+        </div>
+      </div>
+
+      <!-- CONSULTATIONS -->
+      <div class="tab-pane fade" id="tab-consultations" role="tabpanel">
+        <div class="ms-card bg-success bg-opacity-10 border-0 mb-4 px-4 py-4">
+          <h4 class="mb-0 fw-bold text-success">Historique de vos consultations</h4>
+        </div>
+        <div id="consultationsContainer">
+          <!-- Inject JS -->
+        </div>
+      </div>
+
+      <!-- RESULTATS -->
+      <div class="tab-pane fade" id="tab-resultats" role="tabpanel">
+        <div class="ms-card bg-warning bg-opacity-10 border-0 mb-4 px-4 py-4">
+          <h4 class="mb-0 fw-bold text-dark">Résultats Laboratoire & Imagerie</h4>
+        </div>
+        <div id="resultatsContainer" class="row g-3">
+          <!-- Inject JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block inline_javascript %}
+<script>
+  async function fetchData(endpoint) {
+    try {
+      const response = await fetch(endpoint, { headers: { 'Accept': 'application/json' }});
+      if (!response.ok) throw new Error("Network error");
+      return await response.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  function displayEmptyState(container, message, icon) {
+    container.innerHTML = `
+      <div class="col-12">
+        <div class="text-center py-5 ms-card bg-transparent border-dashed">
+          <i class="bi ${icon} text-muted mb-3" style="font-size: 3rem;"></i>
+          <p class="text-muted fw-bold mb-0">${message}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadDossier() {
+    document.getElementById('loadingSpinner').classList.remove('d-none');
+
+    // Fetch API
+    const [prescriptions, consultations, resultats] = await Promise.all([
+      fetchData('/api/prescriptions/'),
+      fetchData('/api/consultations/'),
+      fetchData('/api/resultats_analyses/')
+    ]);
+
+    document.getElementById('loadingSpinner').classList.add('d-none');
+
+    // Render Prescriptions
+    const presC = document.getElementById('prescriptionsContainer');
+    if (prescriptions.length === 0) {
+      displayEmptyState(presC, "Aucune prescription trouvée.", "bi-capsule");
+    } else {
+      presC.innerHTML = prescriptions.map(p => `
+        <div class="col-md-6">
+          <div class="ms-card h-100 border-start border-4 border-primary shadow-sm hover-shadow transition">
+            <h5 class="fw-bold text-dark mb-1">${p.medicament}</h5>
+            <div class="badge bg-primary bg-opacity-10 text-primary mb-2">${p.dosage}</div>
+            <p class="small text-muted mb-2"><i class="bi bi-info-circle me-1"></i>Posologie: ${p.posologie}</p>
+            <p class="small text-muted mb-0"><i class="bi bi-clock-history me-1"></i>Début: ${new Date(p.date_debut).toLocaleDateString('fr-FR')} - Fin: ${new Date(p.date_fin).toLocaleDateString('fr-FR')}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render Consultations
+    const consC = document.getElementById('consultationsContainer');
+    if (consultations.length === 0) {
+      displayEmptyState(consC, "Aucune consultation passée.", "bi-journal-medical");
+    } else {
+      consC.innerHTML = consultations.map(c => `
+        <div class="ms-card border-start border-4 border-success shadow-sm mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0 text-dark">Dr. ${c.medecin || 'Généraliste'}</h5>
+            <span class="small text-muted fw-bold">${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <p class="text-dark fw-bold mb-1 col-md-10">Diagnostic: ${c.diagnostic}</p>
+          ${c.notes ? `<p class="small text-muted bg-light p-3 rounded mb-0 mt-2"><i>"${c.notes}"</i></p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Render Resultats
+    const resC = document.getElementById('resultatsContainer');
+    if (resultats.length === 0) {
+      displayEmptyState(resC, "Aucun résultat d'analyse.", "bi-droplet-half");
+    } else {
+      resC.innerHTML = resultats.map(r => `
+        <div class="col-md-12">
+          <div class="ms-card border-top border-4 border-warning shadow-sm d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+              <h5 class="fw-bold mb-1">${r.type_analyse}</h5>
+              <p class="small text-muted mb-0"><i class="bi bi-calendar-event me-1"></i>Le ${new Date(r.date_analyse).toLocaleDateString('fr-FR')}</p>
+            </div>
+            <div class="text-end">
+              <h4 class="fw-bold text-dark mb-0">${r.resultat}</h4>
+              ${r.unite_mesure ? `<span class="small text-muted">${r.unite_mesure}</span>` : ''}
+            </div>
+            ${r.valeurs_reference ? `<div class="w-100 mt-2 pt-2 border-top small text-muted">Réf: ${r.valeurs_reference}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadDossier();
+
+    // Fallback pour activer les tabs Bootstrap manuellement au cas où le JS Bootstrap ne soit pas chargé
+    document.querySelectorAll('[data-bs-toggle="pill"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => { p.classList.remove('show', 'active'); });
+        
+        const target = document.querySelector(e.target.getAttribute('data-bs-target'));
+        e.target.classList.add('active');
+        target.classList.add('show', 'active');
+      });
+    });
+  });
+</script>
+{% endblock inline_javascript %}

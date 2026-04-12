@@ -1,40 +1,415 @@
 {% extends "base.html" %}
-
 {% load static %}
 
-{% block title %}
-  User: 
-  
-    {{ object.name|default:object.email }}
-
-{% endblock title %}
 {% block content %}
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12">
-        <h2>
-        
-        
-          {{ object.name|default:object.email }}
+<style>
+  .profile-hero { background: linear-gradient(135deg,#1a56db,#0e3fa5); padding: 30px 24px 24px; color: #fff; border-radius: 0 0 28px 28px; margin: -20px -20px 20px; }
+  .prof-avatar { width: 72px; height: 72px; background: rgba(255,255,255,.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 12px; border: 3px solid rgba(255,255,255,.4); }
+  .prof-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .prof-role-badge { display: inline-block; background: rgba(255,255,255,.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .5px; }
+  .prof-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .prof-chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); border-radius: 12px; padding: 6px 14px; font-size: 12px; font-weight: 600; }
+  .settings-group { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; overflow: hidden; margin-bottom: 12px; }
+  .settings-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+  .settings-item:last-child { border-bottom: none; }
+  .s-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .s-body { flex: 1; }
+  .s-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .s-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .s-arrow { color: #cbd5e1; font-size: 16px; }
+  .edit-panel { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; overflow: hidden; margin-bottom: 12px; }
+  .edit-panel-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .edit-panel-header .ep-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+</style>
 
-      </h2>
-    </div>
+<!-- Profile Hero -->
+<div class="profile-hero" id="loadingSpinner">
+  <div class="text-center py-3">
+    <div class="spinner-border text-white" role="status"></div>
   </div>
-  {% if object == request.user %}
-    <!-- Action buttons -->
-    <div class="row">
-      <div class="col-sm-12">
-        <a class="btn btn-primary" href="{% url 'users:update' %}" role="button">My Info</a>
-        <a class="btn btn-primary"
-           href="{% url 'account_email' %}"
-           role="button">E-Mail</a>
-        <a class="btn btn-primary"
-           href="{% url 'mfa_index' %}"
-           role="button">MFA</a>
-        <!-- Your Stuff: Custom user template urls -->
+</div>
+<div class="d-none" id="avatarSection">
+  <div class="profile-hero">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="prof-avatar">👤</div>
+      <div>
+        <div class="prof-name" id="displayName">--</div>
+        <div class="prof-role-badge" id="displayRole">--</div>
       </div>
     </div>
-    <!-- End Action buttons -->
-  {% endif %}
+    <div class="prof-chips">
+      <div class="prof-chip">✅ <span id="displayStatus">Actif</span></div>
+      <div class="prof-chip">📅 Depuis <span id="displayDateJoined">--</span></div>
+      <div class="prof-chip">🔑 <span id="displayLastLogin">--</span></div>
+    </div>
+  </div>
+
+  <!-- Infos système lecture seule -->
+  <div class="settings-group" id="formSection">
+    <div class="settings-item">
+      <div class="s-icon" style="background:#dbeafe">📧</div>
+      <div class="s-body">
+        <div class="s-title">Email</div>
+        <div class="s-sub" id="displayEmail">--</div>
+      </div>
+    </div>
+    <div class="settings-item">
+      <div class="s-icon" style="background:#dcfce7">📱</div>
+      <div class="s-body">
+        <div class="s-title">Téléphone</div>
+        <div class="s-sub" id="displayTel">--</div>
+      </div>
+    </div>
+    <div class="settings-item d-none" id="medecinStatRow">
+      <div class="s-icon" style="background:#f3e8ff">🏥</div>
+      <div class="s-body">
+        <div class="s-title" id="displaySpec">--</div>
+        <div class="s-sub" id="displayRpps">RPPS: --</div>
+      </div>
+    </div>
+    <div class="settings-item d-none" id="patientStatRow">
+      <div class="s-icon" style="background:#fef3c7">🩸</div>
+      <div class="s-body">
+        <div class="s-title" id="displaySanguin">Groupe sanguin: --</div>
+        <div class="s-sub" id="displayBio">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire édition -->
+  <div class="edit-panel">
+    <div class="edit-panel-header" onclick="document.getElementById('editFormCollapse').style.display = document.getElementById('editFormCollapse').style.display === 'block' ? 'none' : 'block'" style="cursor:pointer">
+      <span class="ep-title">✏️ Modifier mes informations</span>
+      <i class="bi bi-chevron-down text-muted"></i>
+    </div>
+    <div id="editFormCollapse" style="display:none">
+      <div class="p-3 border-top">
+        <div class="alert alert-success d-none mb-3" id="successAlert">Profil mis à jour !</div>
+        <div class="alert alert-danger d-none mb-3" id="errorAlert">Une erreur est survenue.</div>
+        <form id="profileForm">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label small fw-bold text-muted">Prénom</label><input type="text" class="form-control" id="inputPrenom"></div>
+            <div class="col-md-6"><label class="form-label small fw-bold text-muted">Nom</label><input type="text" class="form-control" id="inputNom"></div>
+            <div class="col-md-6"><label class="form-label small fw-bold text-muted">Email</label><input type="email" class="form-control" id="inputEmail" disabled></div>
+            <div class="col-md-6"><label class="form-label small fw-bold text-muted">Téléphone</label><input type="tel" class="form-control" id="inputTelephone"></div>
+          </div>
+          <div id="patientFields" class="d-none mt-3 pt-3 border-top">
+            <h6 class="fw-bold mb-3">❤️ Dossier Patient</h6>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label small fw-bold text-muted">Groupe Sanguin</label>
+                <select class="form-select" id="inputSanguin">
+                  <option value="">Inconnu</option>
+                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                  <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                </select></div>
+              <div class="col-md-4"><label class="form-label small fw-bold text-muted">Poids (kg)</label><input type="number" step="0.1" class="form-control" id="inputPoids"></div>
+              <div class="col-md-4"><label class="form-label small fw-bold text-muted">Taille (cm)</label><input type="number" class="form-control" id="inputTaille"></div>
+              <div class="col-md-12"><label class="form-label small fw-bold text-muted">Allergies</label><input type="text" class="form-control" id="inputAllergies" placeholder="Aucune..."></div>
+            </div>
+          </div>
+          <div id="medecinFields" class="d-none mt-3 pt-3 border-top">
+            <h6 class="fw-bold mb-3">🩺 Profil Médecin</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted d-flex justify-content-between">
+                  Spécialité 
+                  <a href="javascript:void(0)" class="text-primary x-small" onclick="toggleNew('Spec')" id="toggleSpecBtn">+ Nouveau</a>
+                </label>
+                <select class="form-select" id="inputSpecSelect"></select>
+                <input type="text" class="form-control d-none" id="inputSpecNew" placeholder="Nom de la spécialité">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted d-flex justify-content-between">
+                  Cabinet 
+                  <a href="javascript:void(0)" class="text-primary x-small" onclick="toggleNew('Cabinet')" id="toggleCabinetBtn">+ Nouveau</a>
+                </label>
+                <select class="form-select" id="inputCabinetSelect"></select>
+                <input type="text" class="form-control d-none" id="inputCabinetNew" placeholder="Nom du cabinet">
+              </div>
+              <div class="col-md-12">
+                <label class="form-label small fw-bold text-muted">Numéro Licence (RPPS)</label>
+                <input type="text" class="form-control" id="inputRpps">
+              </div>
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button type="button" class="ms-btn ms-btn-primary px-4" onclick="saveProfile()" id="saveBtn">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paramètres rapides -->
+  <div class="settings-group">
+    <div class="settings-item" onclick="document.getElementById('pwdModal').style.display='flex'" style="cursor:pointer">
+      <div class="s-icon" style="background:#fee2e2">🔒</div>
+      <div class="s-body"><div class="s-title">Sécurité &amp; Mot de passe</div><div class="s-sub">Modifier votre mot de passe</div></div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </div>
+    <a href="{% if request.user.role == 'MEDECIN' %}{% url 'portal:doctor-notifications' %}{% else %}#{% endif %}" class="settings-item text-decoration-none" style="color:inherit">
+      <div class="s-icon" style="background:#fef3c7">🔔</div>
+      <div class="s-body"><div class="s-title">Notifications</div><div class="s-sub">Gérer vos alertes</div></div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </a>
+    <div class="settings-item" onclick="window.toggleTheme()" style="cursor:pointer">
+      <div class="s-icon" style="background:#f3e8ff">🌙</div>
+      <div class="s-body"><div class="s-title">Apparence</div><div class="s-sub">Thème sombre / clair</div></div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </div>
+    <div class="settings-item" onclick="document.getElementById('privacyModal').style.display='flex'" style="cursor:pointer">
+      <div class="s-icon" style="background:#dcfce7">📊</div>
+      <div class="s-body"><div class="s-title">Confidentialité</div><div class="s-sub">Gestion de vos données</div></div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </div>
+  </div>
+
+  <div class="text-center mt-2 mb-4">
+    <a href="{% url 'account_logout' %}" class="btn btn-outline-danger rounded-pill px-5">Déconnexion</a>
+  </div>
 </div>
+
+<!-- Modal: Changement mot de passe -->
+<div id="pwdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:28px;width:90%;max-width:400px">
+    <h5 class="fw-bold mb-4">🔒 Changer le mot de passe</h5>
+    <div class="mb-3"><label class="form-label small fw-bold text-muted">Ancien mot de passe</label><input type="password" class="form-control" id="pwdOld"></div>
+    <div class="mb-3"><label class="form-label small fw-bold text-muted">Nouveau mot de passe</label><input type="password" class="form-control" id="pwdNew"></div>
+    <div class="mb-4"><label class="form-label small fw-bold text-muted">Confirmer</label><input type="password" class="form-control" id="pwdConfirm"></div>
+    <div class="alert alert-danger d-none mb-3" id="pwdError"></div>
+    <div class="alert alert-success d-none mb-3" id="pwdSuccess">Mot de passe mis à jour ! Reconnectez-vous.</div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-secondary flex-fill" onclick="document.getElementById('pwdModal').style.display='none'">Annuler</button>
+      <button class="btn btn-primary flex-fill" onclick="savePassword()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Confidentialité -->
+<div id="privacyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:28px;width:90%;max-width:420px">
+    <h5 class="fw-bold mb-3">📊 Confidentialité & RGPD</h5>
+    <p class="small text-muted">Vos données médicales sont chiffrées et ne sont jamais partagées sans votre consentement, conformément au RGPD.</p>
+    <ul class="small text-muted ps-3">
+      <li>Accès limité à votre médecin traitant</li>
+      <li>Journalisation de chaque accès à votre dossier</li>
+      <li>Droit d'accès, de rectification et d'effacement</li>
+    </ul>
+    <button class="btn btn-primary w-100 mt-2" onclick="document.getElementById('privacyModal').style.display='none'">J'ai compris</button>
+  </div>
+</div>
+
 {% endblock content %}
+
+{% block inline_javascript %}
+<script>
+  function safeSetText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+    else console.warn(`Element #${id} not found`);
+  }
+
+  function safeSetValue(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+    else console.warn(`Input #${id} not found`);
+  }
+
+  async function loadProfile() {
+    try {
+      console.log("Loading profile data...");
+      const resp = await fetch('/api/users/me/', {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!resp.ok) throw new Error('Failed to load API');
+      const data = await resp.json();
+      currentUser = data;
+      console.log("Profile data received:", data);
+
+      // Hydrate hero
+      safeSetText('displayName', `${data.prenom || ''} ${data.nom || ''}`);
+      safeSetText('displayRole', data.role === 'MEDECIN' ? 'Médecin' : (data.role === 'PATIENT' ? 'Patient' : data.role));
+      safeSetText('displayEmail', data.email || '--');
+      safeSetText('displayTel', data.telephone || 'Non renseigné');
+      safeSetText('displayStatus', data.statut === true ? 'Vérifié' : 'En attente');
+      
+      if (data.last_login) {
+        safeSetText('displayLastLogin', new Date(data.last_login).toLocaleDateString('fr-FR'));
+      }
+      if (data.date_joined) {
+        safeSetText('displayDateJoined', new Date(data.date_joined).toLocaleDateString('fr-FR'));
+      }
+
+      // Hydrate form inputs
+      safeSetValue('inputPrenom', data.prenom || '');
+      safeSetValue('inputNom', data.nom || '');
+      safeSetValue('inputEmail', data.email || '');
+      safeSetValue('inputTelephone', data.telephone || '');
+
+      if (data.role === 'PATIENT' && data.patient_profile) {
+        const pFields = document.getElementById('patientFields');
+        const pStat = document.getElementById('patientStatRow');
+        if (pFields) pFields.classList.remove('d-none');
+        if (pStat) pStat.classList.remove('d-none');
+        
+        safeSetValue('inputSanguin', data.patient_profile.groupe_sanguin || '');
+        safeSetValue('inputPoids', data.patient_profile.poids || '');
+        safeSetValue('inputTaille', data.patient_profile.taille || '');
+        safeSetValue('inputAllergies', data.patient_profile.allergies || '');
+        
+        safeSetText('displaySanguin', `Groupe sanguin: ${data.patient_profile.groupe_sanguin || 'Inconnu'}`);
+        safeSetText('displayBio', `${data.patient_profile.poids || '--'} kg · ${data.patient_profile.taille || '--'} cm`);
+      } else if (data.role === 'MEDECIN' && data.medecin_profile) {
+        const mFields = document.getElementById('medecinFields');
+        const mStat = document.getElementById('medecinStatRow');
+        if (mFields) mFields.classList.remove('d-none');
+        if (mStat) mStat.classList.remove('d-none');
+        
+        // Fetch suggestions and set selected values
+        await fetchSuggestions();
+        safeSetValue('inputSpecSelect', data.medecin_profile.specialite_nom || '');
+        safeSetValue('inputCabinetSelect', data.medecin_profile.cabinet_nom || '');
+        safeSetValue('inputRpps', data.medecin_profile.numero_licence || '');
+        
+        safeSetText('displaySpec', data.medecin_profile.specialite_nom || 'Non défini');
+        safeSetText('displayRpps', `Licence: ${data.medecin_profile.numero_licence || '--'}`);
+      }
+
+      // Show sections
+      const spinner = document.getElementById('loadingSpinner');
+      const avatar = document.getElementById('avatarSection');
+      if (spinner) spinner.classList.add('d-none');
+      if (avatar) avatar.classList.remove('d-none');
+      console.log("Profile UI Hydrated successfully");
+    } catch (e) {
+      console.error("Profile load error:", e);
+      const spinner = document.getElementById('loadingSpinner');
+      if (spinner) spinner.innerHTML = '<div class="alert alert-danger m-3">Impossible de charger le profil.</div>';
+    }
+  }
+
+  function toggleNew(type) {
+    const sel = document.getElementById(`input${type}Select`);
+    const inp = document.getElementById(`input${type}New`);
+    const btn = document.getElementById(`toggle${type}Btn`);
+    if (sel.classList.contains('d-none')) {
+      sel.classList.remove('d-none');
+      inp.classList.add('d-none');
+      btn.textContent = '+ Nouveau';
+    } else {
+      sel.classList.add('d-none');
+      inp.classList.remove('d-none');
+      btn.textContent = 'Choisir';
+    }
+  }
+
+  async function fetchSuggestions() {
+    try {
+      const [specRes, cabRes] = await Promise.all([
+        fetch('/api/specialites/'),
+        fetch('/api/cabinets/')
+      ]);
+      const specs = await specRes.json();
+      const cabs = await cabRes.json();
+      
+      const sSel = document.getElementById('inputSpecSelect');
+      const cSel = document.getElementById('inputCabinetSelect');
+      if (sSel) sSel.innerHTML = '<option value="">--- Sélectionner ---</option>' + specs.map(s => `<option value="${s.nom_specialite}">${s.nom_specialite}</option>`).join('');
+      if (cSel) cSel.innerHTML = '<option value="">--- Sélectionner ---</option>' + cabs.map(c => `<option value="${c.nom}">${c.nom}</option>`).join('');
+    } catch(e) { console.error("Error loading suggestions", e); }
+  }
+
+  async function saveProfile() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    
+    document.getElementById('successAlert').classList.add('d-none');
+    document.getElementById('errorAlert').classList.add('d-none');
+
+    const payload = {
+      prenom: document.getElementById('inputPrenom').value,
+      nom: document.getElementById('inputNom').value,
+      telephone: document.getElementById('inputTelephone').value,
+    };
+
+    if (currentUser.role === 'PATIENT') {
+      payload.patient_profile = {
+        groupe_sanguin: document.getElementById('inputSanguin').value,
+        poids: document.getElementById('inputPoids').value || null,
+        taille: document.getElementById('inputTaille').value || null,
+        allergies: document.getElementById('inputAllergies').value
+      };
+    } else if (currentUser.role === 'MEDECIN') {
+      const specSel = document.getElementById('inputSpecSelect');
+      const specNew = document.getElementById('inputSpecNew');
+      const cabSel = document.getElementById('inputCabinetSelect');
+      const cabNew = document.getElementById('inputCabinetNew');
+
+      payload.medecin_profile = {
+        specialite_name: specSel.classList.contains('d-none') ? specNew.value : specSel.value,
+        cabinet_name: cabSel.classList.contains('d-none') ? cabNew.value : cabSel.value,
+        numero_licence: document.getElementById('inputRpps').value
+      };
+    }
+
+    // CSRF token extraction
+    const csrfToken = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+
+    try {
+      const resp = await fetch('/api/users/me/', {
+        method: 'PATCH',
+        headers: { 
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) throw new Error('Save failed');
+      
+      document.getElementById('successAlert').classList.remove('d-none');
+      await loadProfile(); // Refresh UI
+    } catch (e) {
+      document.getElementById('errorAlert').classList.remove('d-none');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Enregistrer';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadProfile);
+
+  async function savePassword() {
+    const oldPwd = document.getElementById('pwdOld').value;
+    const newPwd = document.getElementById('pwdNew').value;
+    const confirm = document.getElementById('pwdConfirm').value;
+    const errEl = document.getElementById('pwdError');
+    const okEl = document.getElementById('pwdSuccess');
+    errEl.classList.add('d-none');
+    okEl.classList.add('d-none');
+
+    if (!oldPwd || !newPwd) { errEl.textContent = 'Remplissez tous les champs.'; errEl.classList.remove('d-none'); return; }
+    if (newPwd !== confirm) { errEl.textContent = 'Les mots de passe ne correspondent pas.'; errEl.classList.remove('d-none'); return; }
+
+    const csrfToken = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+    try {
+      const resp = await fetch('/accounts/password/change/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+        body: new URLSearchParams({ oldpassword: oldPwd, password1: newPwd, password2: confirm })
+      });
+      if (resp.ok || resp.redirected) {
+        okEl.classList.remove('d-none');
+        setTimeout(() => { document.getElementById('pwdModal').style.display = 'none'; }, 2000);
+      } else {
+        errEl.textContent = 'Erreur lors du changement. Vérifiez l\'ancien mot de passe.';
+        errEl.classList.remove('d-none');
+      }
+    } catch (e) {
+      errEl.textContent = 'Erreur réseau.';
+      errEl.classList.remove('d-none');
+    }
+  }
+</script>
+{% endblock inline_javascript %}

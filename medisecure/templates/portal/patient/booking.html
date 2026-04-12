@@ -1,56 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Prise de Rendez-vous - MediSecure{% endblock %}
+{% block title %}Rendez-vous - MediSecure{% endblock %}
 {% block content %}
-<div class="row mb-4">
-  <div class="col-12 text-center">
-    <h1 class="display-6 fw-bold">Prendre un Rendez-vous</h1>
-    <p class="text-muted">Trouvez le spécialiste qui vous correspond.</p>
-  </div>
+<style>
+  .dash-hero { background: linear-gradient(135deg,#16a34a,#059669); padding: 30px 24px 24px; color: #fff; border-radius: 0 0 28px 28px; margin: -20px -20px 20px; }
+  .dash-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+  .dash-subtitle { font-size: 14px; opacity: 0.9; }
+  .search-card { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; padding: 20px; margin-top: -40px; position: relative; z-index: 10; box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+</style>
+
+<div class="dash-hero shadow-sm pb-5">
+  <div class="dash-title">Prendre Rendez-vous 📅</div>
+  <div class="dash-subtitle">Trouvez le professionnel de santé dont vous avez besoin.</div>
 </div>
 
-<div class="row justify-content-center mb-5">
-  <div class="col-lg-8">
-    <div class="ms-card">
-      <form class="row g-3" hx-get="{% url 'portal:doctor-search' %}" hx-target="#doctor-results" hx-trigger="change, keyup delay:500ms from:input" hx-indicator=".loader">
-        <div class="col-md-5">
-          <label class="form-label text-muted small fw-bold">Spécialité</label>
-          <select name="specialite" class="form-select border-0 bg-light-subtle py-3 px-4" style="border-radius: 10px;">
-            <option value="">Toutes les spécialités</option>
-            {% for spec in specialites %}
-            <option value="{{ spec.id }}">{{ spec.nom_specialite }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-7">
-          <label class="form-label text-muted small fw-bold">Nom du médecin</label>
-          <div class="input-group border-0 bg-light-subtle rounded px-2" style="border-radius: 10px !important;">
-            <span class="input-group-text border-0 bg-transparent py-3">
-              <i class="bi bi-search text-muted"></i>
-            </span>
-            <input type="text" name="q" class="form-control border-0 bg-transparent shadow-none" placeholder="Rechercher un nom...">
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div class="row justify-content-center">
-  <div class="col-lg-10">
-    <div class="text-center loader htmx-indicator mb-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Chargement...</span>
+<div class="container-fluid" style="max-width: 600px; margin: 0 auto;">
+  <div class="search-card mb-4">
+    <form class="row g-3" hx-get="{% url 'portal:doctor-search' %}" hx-target="#doctor-results" hx-trigger="change, keyup delay:500ms from:input" hx-indicator=".loader">
+      <div class="col-12">
+        <label class="form-label text-muted small fw-bold mb-1">Quelle spécialité ?</label>
+        <select name="specialite" class="form-select border-0 bg-light-subtle py-3 px-3" style="border-radius: 12px; font-weight: 600; color: #1e293b;">
+          <option value="">Toutes les spécialités</option>
+          {% for spec in specialites %}
+          <option value="{{ spec.id }}">{{ spec.nom_specialite }}</option>
+          {% endfor %}
+        </select>
       </div>
-    </div>
+      <div class="col-12">
+        <label class="form-label text-muted small fw-bold mb-1">Nom du médecin</label>
+        <div class="input-group border-0 bg-light-subtle px-2" style="border-radius: 12px;">
+          <span class="input-group-text border-0 bg-transparent py-3 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" name="q" class="form-control border-0 bg-transparent shadow-none" placeholder="Ex: Dupont" style="font-weight: 500;">
+        </div>
+      </div>
+    </form>
+  </div>
 
-    <div
-      id="doctor-results"
-      class="row g-4"
-      hx-get="{% url 'portal:doctor-search' %}"
-      hx-trigger="load"
-    >
-      <!-- HTMX injects results here -->
+  <div class="text-center loader htmx-indicator mb-3">
+    <div class="spinner-border text-success" role="status">
+      <span class="visually-hidden">Recherche...</span>
     </div>
+  </div>
+
+  <div id="doctor-results" class="row g-3 pb-5" hx-get="{% url 'portal:doctor-search' %}" hx-trigger="load">
+    <!-- HTMX injects results here -->
   </div>
 </div>
 {% endblock %}

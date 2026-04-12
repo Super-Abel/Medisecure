@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     PatientDashboardView,
+    PatientDossierView,
     DoctorDashboardView,
     BookingView,
     DoctorSearchView,
@@ -8,11 +9,15 @@ from .views import (
     DoctorPatientListView,
     DoctorDossierUpdateView,
     ConsultationFinishView,
+    DoctorPlanningView,
+    DoctorMessagesView,
+    DoctorNotificationsView,
 )
 
 app_name = "portal"
 urlpatterns = [
     path("patient/", PatientDashboardView.as_view(), name="patient-dashboard"),
+    path("patient/dossier/", PatientDossierView.as_view(), name="patient-dossier"),
     path("patient/booking/", BookingView.as_view(), name="patient-booking"),
     path("patient/booking/search/", DoctorSearchView.as_view(), name="doctor-search"),
     path(
@@ -22,6 +27,13 @@ urlpatterns = [
     ),
     path("doctor/", DoctorDashboardView.as_view(), name="doctor-dashboard"),
     path("doctor/patients/", DoctorPatientListView.as_view(), name="doctor-patients"),
+    path("doctor/planning/", DoctorPlanningView.as_view(), name="doctor-planning"),
+    path("doctor/messages/", DoctorMessagesView.as_view(), name="doctor-messages"),
+    path(
+        "doctor/notifications/",
+        DoctorNotificationsView.as_view(),
+        name="doctor-notifications",
+    ),
     path(
         "doctor/patients/<int:patient_id>/dossier/",
         DoctorDossierUpdateView.as_view(),

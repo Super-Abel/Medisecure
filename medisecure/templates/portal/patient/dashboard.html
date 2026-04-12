@@ -1,146 +1,138 @@
-{% extends "base.html" %} {% load static %} {% block content %}
-<div class="row mb-5">
-  <div class="col-12">
-    <h1 class="display-5 fw-bold mb-1">
-      Bienvenue, {{ request.user.prenom }} !
-    </h1>
-    <p class="text-muted">Voici le récapitulatif de votre suivi médical.</p>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Patient{% endblock %}
+
+{% block content %}
+<style>
+  .dash-hero { background: linear-gradient(135deg,#16a34a,#059669); padding: 30px 24px 24px; color: #fff; border-radius: 0 0 28px 28px; margin: -20px -20px 20px; }
+  .dash-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+  .dash-subtitle { font-size: 14px; opacity: 0.9; }
+  
+  .prof-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-top: 20px; scrollbar-width: none; }
+  .prof-chips::-webkit-scrollbar { display: none; }
+  .prof-chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); border-radius: 12px; padding: 10px 16px; min-width: max-content; display: flex; flex-direction: column; }
+  .chip-label { font-size: 11px; text-transform: uppercase; font-weight: 700; opacity: 0.8; letter-spacing: 0.5px; }
+  .chip-value { font-size: 15px; font-weight: 800; margin-top: 2px; }
+  
+  .appt-slot { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid #e5e9ef; display: flex; gap: 16px; align-items: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; }
+  .appt-slot:hover { border-color: #16a34a; box-shadow: 0 4px 15px rgba(22,163,74,0.05); }
+  .slot-time-col { text-align: center; min-width: 56px; }
+  .slot-time { font-size: 15px; font-weight: 800; color: #16a34a; }
+  .slot-date { font-size: 11px; color: #94a3b8; font-weight: 600; margin-top: 2px;}
+  .slot-divider { width: 3px; background: #f1f5f9; height: 46px; border-radius: 3px; }
+  .slot-body { flex: 1; }
+  .slot-doc { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .slot-spec { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+  
+  .badge-confirmed { background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+  .badge-pending { background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+  .badge-cancelled { background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+
+  .settings-group { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; overflow: hidden; margin-bottom: 24px; }
+  .settings-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; text-decoration: none; color: inherit; transition: 0.2s; }
+  .settings-item:hover { background: #f8fafc; }
+  .settings-item:last-child { border-bottom: none; }
+  .s-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .s-body { flex: 1; }
+  .s-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .s-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .s-arrow { color: #cbd5e1; font-size: 16px; }
+</style>
+
+<div class="dash-hero shadow-sm">
+  <div class="dash-title">Bonjour, {{ request.user.prenom }} ! 👋</div>
+  <div class="dash-subtitle">Voici le récapitulatif de votre suivi médical.</div>
+  
+  <div class="prof-chips">
+    <div class="prof-chip">
+      <span class="chip-label">Prochain RDV</span>
+      <span class="chip-value">{% with rdv=rdv_recents.0 %}{% if rdv and rdv.statut != 'ANNULE' %}{{ rdv.date_heure|date:"d M H:i" }}{% else %}--{% endif %}{% endwith %}</span>
+    </div>
+    <div class="prof-chip">
+      <span class="chip-label">Dossier Médical</span>
+      <span class="chip-value">À jour ✅</span>
+    </div>
+    <div class="prof-chip">
+      <span class="chip-label">Notifications</span>
+      <span class="chip-value" id="dashNotifCount">--</span>
+    </div>
   </div>
 </div>
 
-<div class="row g-4 mb-5">
-  <!-- Stat Cards -->
-  <div class="col-md-4">
-    <div class="ms-card h-100 border-start border-4 border-primary">
-      <div class="d-flex align-items-center">
-        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-          <i class="bi bi-calendar2-check text-primary fs-3"></i>
-        </div>
-        <div>
-          <h6 class="text-muted small mb-0">Prochain RDV</h6>
-          <p class="fs-5 fw-bold mb-0">
-            {% with rdv=rdv_recents.0 %}{% if rdv %}{{ rdv.date_heure|date:"d M Y" }}{% else %}Aucun{% endif %}{% endwith %}
-          </p>
-        </div>
+<div class="content-body" style="max-width: 600px; margin: 0 auto;">
+  
+  <!-- Quick Actions -->
+  <h6 class="fw-bold text-muted text-uppercase small mb-3">Accès rapide</h6>
+  <div class="settings-group shadow-sm">
+    <a href="{% url 'portal:patient-booking' %}" class="settings-item">
+      <div class="s-icon" style="background:#dcfce7">📅</div>
+      <div class="s-body">
+        <div class="s-title">Prendre Rendez-vous</div>
+        <div class="s-sub">Trouver un pro de santé</div>
       </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="ms-card h-100 border-start border-4 border-success">
-      <div class="d-flex align-items-center">
-        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-          <i class="bi bi-heart-pulse text-success fs-3"></i>
-        </div>
-        <div>
-          <h6 class="text-muted small mb-0">Statut Santé</h6>
-          <p class="fs-5 fw-bold mb-0">Stable</p>
-        </div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </a>
+    <a href="{% url 'portal:patient-dossier' %}" class="settings-item">
+      <div class="s-icon" style="background:#e0e7ff">📋</div>
+      <div class="s-body">
+        <div class="s-title">Dossier Médical</div>
+        <div class="s-sub">Antécédents, ordonnances...</div>
       </div>
-    </div>
+      <span class="s-arrow"><i class="bi bi-chevron-right"></i></span>
+    </a>
   </div>
-  <div class="col-md-4">
-    <div class="ms-card h-100 border-start border-4 border-warning">
-      <div class="d-flex align-items-center">
-        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-          <i class="bi bi-bell text-warning fs-3"></i>
-        </div>
-        <div>
-          <h6 class="text-muted small mb-0">Notifications</h6>
-          <p class="fs-5 fw-bold mb-0">2 nouvelles</p>
-        </div>
-      </div>
-    </div>
+
+  <!-- Recent RDVs -->
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+    <h6 class="fw-bold text-muted text-uppercase small mb-0">Rendez-vous récents</h6>
+    <a href="#" class="text-success text-decoration-none small fw-bold">Tout voir</a>
   </div>
+  
+  {% for rdv in rdv_recents %}
+  <div class="appt-slot">
+    <div class="slot-time-col">
+      <div class="slot-time">{{ rdv.date_heure|time:"H:i" }}</div>
+      <div class="slot-date">{{ rdv.date_heure|date:"d M" }}</div>
+    </div>
+    <div class="slot-divider"></div>
+    <div class="slot-body">
+      <div class="slot-doc">Dr. {{ rdv.medecin.user.nom }} {{ rdv.medecin.user.prenom }}</div>
+      <div class="slot-spec">{{ rdv.medecin.specialite }}</div>
+      {% if rdv.statut == 'CONFIRME' %}
+        <span class="badge-confirmed">Confirmé</span>
+      {% elif rdv.statut == 'ANNULE' %}
+        <span class="badge-cancelled">Annulé</span>
+      {% else %}
+        <span class="badge-pending">En attente</span>
+      {% endif %}
+    </div>
+    <!-- <i class="bi bi-chevron-right text-muted"></i> -->
+  </div>
+  {% empty %}
+  <div class="text-center py-5 text-muted">
+    <div class="mb-3"><i class="bi bi-calendar-x" style="font-size: 3rem; color: #cbd5e1;"></i></div>
+    <h6 class="fw-bold mb-1">Aucun rendez-vous</h6>
+    <p class="small">Vous n'avez pas de consultations passées ou prévues.</p>
+  </div>
+  {% endfor %}
+  
+  <div class="pb-4"></div>
+  
 </div>
 
-<div class="row g-4">
-  <!-- Appointments list -->
-  <div class="col-lg-8">
-    <div class="ms-card p-0 overflow-hidden">
-      <div class="card-header bg-transparent border-0 px-4 py-4 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold">Rendez-vous récents</h5>
-        <a href="#" class="ms-btn ms-btn-secondary btn-sm">Tout voir</a>
-      </div>
-      <div class="table-responsive">
-        <table class="ms-table mb-0">
-          <thead>
-            <tr>
-              <th class="ps-4">Médecin</th>
-              <th>Spécialité</th>
-              <th>Date & Heure</th>
-              <th class="text-end pe-4">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for rdv in rdv_recents %}
-            <tr>
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.8rem;">
-                    {{ rdv.medecin.user.prenom|first }}
-                  </div>
-                  <span class="fw-semibold text-primary">Dr. {{ rdv.medecin.user.nom }} {{ rdv.medecin.user.prenom }}</span>
-                </div>
-              </td>
-              <td class="small">{{ rdv.medecin.specialite }}</td>
-              <td class="small">{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-              <td class="text-end pe-4">
-                <span class="badge rounded-pill {% if rdv.statut == 'CONFIRME' %}bg-success-subtle text-success{% elif rdv.statut == 'ANNULE' %}bg-danger-subtle text-danger{% else %}bg-warning-subtle text-warning{% endif %} px-3 py-2">
-                  {{ rdv.get_statut_display }}
-                </span>
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="4" class="text-center py-5 text-muted">
-                <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
-                <p class="small mb-0">Aucun rendez-vous trouvé.</p>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Right Sidebar -->
-  <div class="col-lg-4">
-    <!-- Quick Booking -->
-    <div class="ms-card">
-      <h5 class="fw-bold mb-3">Reprendre RDV ?</h5>
-      <p class="text-muted small">
-        Trouvez rapidement une disponibilité avec vos praticiens favoris.
-      </p>
-      <div class="list-group list-group-flush mb-3">
-        {% for rdv in rdv_recents|slice:":2" %}
-        <button class="list-group-item list-group-item-action border-0 px-0 py-3 bg-transparent">
-          <div class="d-flex w-100 justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-              <i class="bi bi-person-plus text-primary me-2"></i>
-              <span class="small fw-bold">Dr. {{ rdv.medecin.user.nom }}</span>
-            </div>
-            <span class="badge bg-primary bg-opacity-10 text-primary">Prendre RDV</span>
-          </div>
-        </button>
-        {% endfor %}
-      </div>
-      <button class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
-        Nouveau Rendez-vous
-      </button>
-    </div>
-
-    <!-- Dossier Médical Summary -->
-    <div class="ms-card text-center">
-      <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
-        <i class="bi bi-file-earmark-medical text-primary fs-2"></i>
-      </div>
-      <h5 class="fw-bold">Dossier Médical</h5>
-      <p class="text-muted small">
-        Vos antécédents, allergies et documents de santé en un coup d'œil.
-      </p>
-      <a href="#" class="ms-btn ms-btn-secondary w-100 justify-content-center">Accéder au dossier</a>
-    </div>
-  </div>
-</div>
 {% endblock content %}
+
+{% block inline_javascript %}
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch('/api/notifications/unread-count/');
+      const data = await res.json();
+      document.getElementById('dashNotifCount').textContent = data.count > 0 ? `${data.count} nouvelle(s)` : 'Aucune';
+    } catch(e) {
+      document.getElementById('dashNotifCount').textContent = '--';
+    }
+  });
+</script>
+{% endblock inline_javascript %}

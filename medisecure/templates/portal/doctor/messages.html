@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Messages - Médecin{% endblock %}
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12 text-center py-5">
+    <div class="mb-4">
+      <i class="bi bi-chat-dots" style="font-size: 5rem; color: #1a56db;"></i>
+    </div>
+    <h3 class="fw-bold mb-2">Messagerie</h3>
+    <p class="text-muted">L'interface de messagerie sécurisée médecin/patient n'est pas encore implémentée dans cette démo.</p>
+    <a href="{% url 'portal:doctor-dashboard' %}" class="btn btn-outline-primary mt-3 px-4 rounded-pill">Retour à l'accueil</a>
+  </div>
+</div>
+{% endblock %}
