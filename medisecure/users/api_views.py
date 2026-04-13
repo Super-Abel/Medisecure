@@ -3,6 +3,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.views import TokenRefreshView as SimpleJWTTokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from medisecure.users.repositories import DjangoUserRepository, DjangoLogRepository
 from medisecure.application.auth_service import AuthService
@@ -309,3 +311,33 @@ class VerifyEmailView(APIView):
                 "detail": "Email vérifié avec succès. Vous pouvez maintenant vous connecter."
             }
         )
+
+
+class CustomTokenRefreshView(SimpleJWTTokenRefreshView):
+    """
+    Vue personnalisée pour rafraîchir le token.
+    Permet de passer le refresh token dans le header Authorization: Bearer <token>
+    au lieu du corps de la requête.
+    """
+
+    @extend_schema(
+        request=None,
+        responses={200: dict},
+        summary="Rafraîchir le token JWT (via Header Authorization)",
+        tags=["Auth"],
+    )
+    def post(self, request, *args, **kwargs):
+        # Si le refresh token n'est pas dans le body, on le cherche dans le header Authorization
+        if "refresh" not in request.data:
+            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+            if auth_header.startswith("Bearer "):
+                refresh_token = auth_header.split(" ")[1]
+                # On injecte le token dans les données pour le sérialiseur SimpleJWT
+                request.data._mutable = True
+                request.data["refresh"] = refresh_token
+                request.data._mutable = False
+
+        try:
+            return super().post(request, *args, **kwargs)
+        except (InvalidToken, TokenError) as e:
+            raise InvalidToken(e.args[0])

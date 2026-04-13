@@ -58,10 +58,7 @@ class UserSignupForm(SignupForm):
         user.role = self.cleaned_data["role"]
         user.save()
 
-        if user.role == "PATIENT":
-            Patient.objects.create(user=user)
-        elif user.role == "MEDECIN":
-            Medecin.objects.create(user=user, numero_licence=f"LIC-{user.id}")
+        # Profile creation is handled by signals in medisecure.users.signals
 
         return user
 

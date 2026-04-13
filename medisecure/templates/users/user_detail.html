@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+{% csrf_token %}
 <style>
   .profile-hero { background: linear-gradient(135deg,#1a56db,#0e3fa5); padding: 30px 24px 24px; color: #fff; border-radius: 0 0 28px 28px; margin: -20px -20px 20px; }
   .prof-avatar { width: 72px; height: 72px; background: rgba(255,255,255,.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 12px; border: 3px solid rgba(255,255,255,.4); }
@@ -354,7 +355,7 @@
     }
 
     // CSRF token extraction
-    const csrfToken = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
     try {
       const resp = await fetch('/api/users/me/', {
@@ -392,7 +393,7 @@
     if (!oldPwd || !newPwd) { errEl.textContent = 'Remplissez tous les champs.'; errEl.classList.remove('d-none'); return; }
     if (newPwd !== confirm) { errEl.textContent = 'Les mots de passe ne correspondent pas.'; errEl.classList.remove('d-none'); return; }
 
-    const csrfToken = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     try {
       const resp = await fetch('/accounts/password/change/', {
         method: 'POST',

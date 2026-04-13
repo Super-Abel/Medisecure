@@ -106,7 +106,7 @@ class DoctorSearchView(LoginRequiredMixin, ListView):
         query = self.request.GET.get("q", "")
         spec_id = self.request.GET.get("specialite", "")
 
-        qs = Medecin.objects.select_related("user", "specialite", "cabinet")
+        qs = Medecin.objects.all()
         if spec_id:
             qs = qs.filter(specialite_id=spec_id)
         if query:

@@ -1,4 +1,7 @@
+import logging
 from rest_framework import status
+
+logger = logging.getLogger(__name__)
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
@@ -29,6 +32,9 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
         serializer = UserSerializer(
             request.user, data=request.data, partial=True, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            logger.error(f"User update validation failed: {serializer.errors}")
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
+
         serializer.save()
         return Response(status=status.HTTP_200_OK, data=serializer.data)

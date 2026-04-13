@@ -14,7 +14,10 @@ from medisecure.users.api_views import (
     ResetPasswordView,
     PatientRegistrationView,
     MedecinRegistrationView,
+    PatientRegistrationView,
+    MedecinRegistrationView,
     VerifyEmailView,
+    CustomTokenRefreshView,
 )
 from medisecure.users.admin_views import LogActiviteListView, UserRoleUpdateView
 from medisecure.users.profile_views import (
@@ -53,7 +56,7 @@ app_name = "api"
 urlpatterns = router.urls + [
     # Tokens JWT
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
     # Auth
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
@@ -131,7 +134,7 @@ urlpatterns = router.urls + [
     ),
     # --- Alias pour l'App Mobile ---
     # Auth
-    path("auth/refresh", TokenRefreshView.as_view(), name="mobile-auth-refresh"),
+    path("auth/refresh", CustomTokenRefreshView.as_view(), name="mobile-auth-refresh"),
     # Appointments
     path(
         "appointments/", PatientRDVListView.as_view(), name="mobile-appointments-list"

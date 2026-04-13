@@ -37,14 +37,17 @@ MEDIA_URL = "http://media.testserver/"
 # django-webpack-loader
 # ------------------------------------------------------------------------------
 # WEBPACK_LOADER["DEFAULT"]["LOADER_CLASS"] = "webpack_loader.loaders.FakeWebpackLoader"  # noqa: F405
-# DATABASE
+# django-allauth
 # ------------------------------------------------------------------------------
+ACCOUNT_EMAIL_VERIFICATION = "none"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+        "NAME": str(BASE_DIR / "test_db.sqlite3"),
     }
 }
+
 # E2E / live_server
 # ------------------------------------------------------------------------------
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]

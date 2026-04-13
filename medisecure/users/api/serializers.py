@@ -20,8 +20,12 @@ class MedecinSerializer(serializers.ModelSerializer):
     cabinet_nom = serializers.ReadOnlyField(source="cabinet.nom")
 
     # Write-only fields to allow creating new ones
-    specialite_name = serializers.CharField(write_only=True, required=False)
-    cabinet_name = serializers.CharField(write_only=True, required=False)
+    specialite_name = serializers.CharField(
+        write_only=True, required=False, allow_blank=True
+    )
+    cabinet_name = serializers.CharField(
+        write_only=True, required=False, allow_blank=True
+    )
 
     class Meta:
         model = Medecin
