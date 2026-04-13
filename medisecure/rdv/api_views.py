@@ -23,16 +23,24 @@ class PatientRDVListView(APIView):
         summary="Consulter ses rendez-vous",
         tags=["Rendez-vous"],
     )
-    def get(self, request, patient_id: int):
+    def get(self, request, patient_id=None):
         svc = RendezVousService()
+
+        # Gestion de l'alias pour le mobile
+        if patient_id is None:
+            if hasattr(request.user, "patient_profile"):
+                patient_id = request.user.patient_profile.id
+            else:
+                return Response({"detail": "Vous n'êtes pas un patient."}, status=403)
+
         rdvs = svc.list_by_patient(patient_id)
         return Response(
             [
                 {
-                    "id_rdv": r.id_rdv,
+                    "id": r.id_rdv,
                     "patient_id": r.patient_id,
-                    "medecin_id": r.medecin_id,
-                    "date_heure": r.date_heure,
+                    "doctor_id": r.medecin_id,
+                    "date_rdv": r.date_heure,
                     "motif": r.motif,
                     "statut": r.statut,
                 }
@@ -46,22 +54,41 @@ class PatientRDVListView(APIView):
         summary="Réserver un rendez-vous",
         tags=["Rendez-vous"],
     )
-    def post(self, request, patient_id: int):
-        ser = RendezVousCreateSerializer(data=request.data)
+    def post(self, request, patient_id=None):
+        # Mappage des champs mobiles -> backend
+        data = request.data.copy()
+        if "doctor_id" in data:
+            data["medecin"] = data.pop("doctor_id")
+        if "date_rdv" in data:
+            data["date_heure"] = data.pop("date_rdv")
+
+        if patient_id is None:
+            if hasattr(request.user, "patient_profile"):
+                data["patient"] = request.user.patient_profile.id
+            else:
+                return Response({"detail": "Identité patient manquante."}, status=400)
+        else:
+            data["patient"] = patient_id
+
+        ser = RendezVousCreateSerializer(data=data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
         svc = RendezVousService()
         rdv = svc.reserver(
             RendezVousEntity(
                 id_rdv=None,
-                patient_id=patient_id,
-                medecin_id=d["medecin_id"],
+                patient_id=(
+                    d["patient"].id if hasattr(d["patient"], "id") else d["patient"]
+                ),
+                medecin_id=(
+                    d["medecin"].id if hasattr(d["medecin"], "id") else d["medecin"]
+                ),
                 date_heure=d["date_heure"],
                 motif=d["motif"],
             )
         )
         return Response(
-            {"id_rdv": rdv.id_rdv, "statut": rdv.statut}, status=status.HTTP_201_CREATED
+            {"id": rdv.id_rdv, "statut": rdv.statut}, status=status.HTTP_201_CREATED
         )
 
 
@@ -105,18 +132,18 @@ class RDVDetailView(APIView):
     )
     def get(self, request, rdv_id: int):
         from .models import RendezVous
-        try:
-            rdv = RendezVous.objects.get(id=rdv_id)
-        except RendezVous.DoesNotExist:
-            return Response({"detail": "RDV introuvable."}, status=status.HTTP_404_NOT_FOUND)
-        return Response({
-            "id_rdv": rdv.id,
-            "patient_id": rdv.patient_id,
-            "medecin_id": rdv.medecin_id,
-            "date_heure": rdv.date_heure,
-            "motif": rdv.motif,
-            "statut": rdv.statut,
-        })
+
+        rdv = RendezVous.objects.get(id=rdv_id)
+        return Response(
+            {
+                "id_rdv": rdv.id,
+                "patient_id": rdv.patient_id,
+                "medecin_id": rdv.medecin_id,
+                "date_heure": rdv.date_heure,
+                "motif": rdv.motif,
+                "statut": rdv.statut,
+            }
+        )
 
     @extend_schema(
         request=RendezVousUpdateSerializer,

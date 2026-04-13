@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from medisecure.medical.models import Specialite, Cabinet
 from .managers import UserManager
+from django.utils import timezone
 
 
 class Roles(models.TextChoices):
@@ -26,6 +27,8 @@ class User(AbstractUser):
     prenom = models.CharField(_("Prénom"), blank=True, max_length=100)
     telephone = models.CharField(_("Téléphone"), blank=True, max_length=20)
     statut = models.BooleanField(default=False)  # False until email is verified
+    failed_attempts = models.IntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
 
     name = None  # Use nom/prenom instead
     first_name = None  # type: ignore[assignment]
@@ -52,6 +55,9 @@ class Patient(models.Model):
     date_naissance = models.DateField(null=True, blank=True)
     sexe = models.CharField(max_length=10, blank=True)
     adresse = models.TextField(blank=True)
+    groupe_sanguin = models.CharField(max_length=5, blank=True)
+    poids = models.FloatField(null=True, blank=True)
+    taille = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"Patient: {self.user.email}"
@@ -141,3 +147,19 @@ class EmailVerificationToken(models.Model):
         from datetime import timedelta
 
         return not self.used and self.created_at >= timezone.now() - timedelta(hours=48)
+
+
+class Disponibilite(models.Model):
+    medecin = models.ForeignKey(
+        Medecin, on_delete=models.CASCADE, related_name="disponibilites"
+    )
+    date_specifique = models.DateField(default=timezone.now)
+    heure_debut = models.TimeField()
+    heure_fin = models.TimeField()
+
+    class Meta:
+        unique_together = ("medecin", "date_specifique")
+        ordering = ["date_specifique"]
+
+    def __str__(self):
+        return f"{self.medecin.user.email} - {self.date_specifique} ({self.heure_debut} -> {self.heure_fin})"

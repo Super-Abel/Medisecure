@@ -1,43 +1,153 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 {% block title %}Confirmer RDV avec Dr. {{ medecin.user.nom }}{% endblock %}
 {% block content %}
-<div class="row justify-content-center mb-5">
-  <div class="col-lg-6">
-    <div class="ms-card p-0 overflow-hidden">
-      <div class="card-header bg-transparent border-0 px-4 py-4">
-        <div class="d-flex align-items-center">
-          <a href="{% url 'portal:patient-booking' %}" class="ms-btn ms-btn-secondary p-2 me-3" style="width: 40px; height: 40px; justify-content: center; border-radius: 50%;">
-            <i class="bi bi-arrow-left"></i>
-          </a>
-          <h5 class="mb-0 fw-bold">Prendre rendez-vous</h5>
-        </div>
-      </div>
-      <div class="card-body px-4 pb-4">
-        <div class="d-flex align-items-center justify-content-center mb-4">
-          <div class="avatar-lg rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: 800;">
-            {{ medecin.user.prenom|first }}{{ medecin.user.nom|first }}
-          </div>
-          <div>
-            <h5 class="fw-bold mb-1">
-              Dr. {{ medecin.user.prenom }} {{ medecin.user.nom }}
-            </h5>
-            <p class="text-primary fw-medium small mb-0">
-              {{ medecin.specialite.nom_specialite }}
-            </p>
-          </div>
-        </div>
+<style>
+  .dash-hero { background: linear-gradient(135deg,#16a34a,#059669); padding: 30px 24px 24px; color: #fff; border-radius: 0 0 28px 28px; margin: -20px -20px 20px; }
+  .book-card { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; padding: 20px; margin-top: -40px; position: relative; z-index: 10; box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+  
+  .day-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+  .day-scroll::-webkit-scrollbar { display: none; }
+  .day-card { flex: 0 0 auto; width: 64px; text-align: center; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 0; cursor: pointer; transition: 0.2s; }
+  .day-card.active { background: #16a34a; border-color: #16a34a; color: #fff; box-shadow: 0 4px 10px rgba(22,163,74,0.3); }
+  .day-name { font-size: 11px; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; opacity: 0.8; }
+  .day-num { font-size: 20px; font-weight: 800; }
+  
+  .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px; }
+  .time-slot { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center; font-size: 14px; font-weight: 700; color: #1e293b; cursor: pointer; transition: 0.2s; }
+  .time-slot.active { background: #16a34a; border-color: #16a34a; color: #fff; box-shadow: 0 4px 10px rgba(22,163,74,0.3); }
+</style>
 
-        <form method="post" class="needs-validation">
-          {% csrf_token %} {{ form|crispy }}
-          <div class="text-end mt-4">
-            <button type="submit" class="ms-btn ms-btn-primary w-100 justify-content-center py-3">
-              Confirmer le rendez-vous
-            </button>
-          </div>
-        </form>
+<div class="dash-hero shadow-sm pb-5 d-flex align-items-center">
+  <a href="{% url 'portal:patient-booking' %}" class="text-white text-decoration-none me-3"><i class="bi bi-arrow-left fs-4"></i></a>
+  <div>
+    <h5 class="fw-bold mb-0">Prendre rendez-vous</h5>
+    <div class="small opacity-75">Sélection du créneau</div>
+  </div>
+</div>
+
+<div class="container-fluid" style="max-width: 600px; margin: 0 auto;">
+  <div class="book-card mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: 800;">
+        {{ medecin.user.prenom|first }}{{ medecin.user.nom|first }}
+      </div>
+      <div>
+        <h5 class="fw-bold mb-1" style="color: #1e293b;">Dr. {{ medecin.user.prenom }} {{ medecin.user.nom }}</h5>
+        <div class="text-success fw-bold small">{{ medecin.specialite.nom_specialite }}</div>
       </div>
     </div>
   </div>
+
+  <form method="post" id="bookingForm" class="needs-validation text-start">
+    {% csrf_token %}
+    
+    <!-- Choix Jour -->
+    <h6 class="fw-bold text-muted small mb-3">1. Choisissez un jour</h6>
+    <div class="day-scroll mb-4" id="daysContainer">
+      <!-- Days populated by JS -->
+    </div>
+
+    <!-- Choix Heure -->
+    <h6 class="fw-bold text-muted small mb-3">2. Heure de disponibilité</h6>
+    <div class="time-grid mb-4" id="timesContainer">
+      <!-- Times populated by JS -->
+    </div>
+
+    <!-- Motif -->
+    <h6 class="fw-bold text-muted small mb-2">3. Motif de consultation</h6>
+    <input type="text" name="motif" id="id_motif" class="form-control bg-light-subtle py-3 px-3 border-0 mb-4" placeholder="Ex: Consultation de suivi..." style="border-radius: 12px; font-weight: 500;" required>
+
+    <!-- Hidden input for the Django Form -->
+    <input type="hidden" name="date_heure" id="id_date_heure" required>
+
+    <div class="text-end pb-5 mt-4">
+      <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" id="submitBtn" disabled>
+        Confirmer le rendez-vous
+      </button>
+    </div>
+  </form>
 </div>
+
+{% endblock %}
+
+{% block inline_javascript %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const TIME_SLOTS = ['09:00', '09:30', '10:00', '11:00', '14:30', '15:00', '16:00', '17:30'];
+  
+  const daysContainer = document.getElementById('daysContainer');
+  const timesContainer = document.getElementById('timesContainer');
+  const hiddenInput = document.getElementById('id_date_heure');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  let selectedDate = null;
+  let selectedTime = null;
+
+  // Generate 7 upcoming days (starting tomorrow)
+  const today = new Date();
+  for (let i = 0; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    // Ignore Weekends
+    // if (d.getDay() === 0 || d.getDay() === 6) continue;
+    
+    const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    card.innerHTML = `<div class="day-name">${DAYS_FR[d.getDay()]}</div><div class="day-num">${d.getDate()}</div>`;
+    
+    card.onclick = () => {
+      document.querySelectorAll('.day-card').forEach(el => el.classList.remove('active'));
+      card.classList.add('active');
+      selectedDate = dStr;
+      selectedTime = null;
+      updateFormStatus();
+      fetchTimes(dStr);
+    };
+    daysContainer.appendChild(card);
+  }
+
+  async function fetchTimes(dateStr) {
+    timesContainer.innerHTML = '<div class="spinner-border spinner-border-sm text-success mx-auto m-2" role="status"></div>';
+    try {
+      const res = await fetch("{% url 'api:medecin-slots' medecin.id %}?date=" + dateStr);
+      if (!res.ok) throw new Error();
+      const slots = await res.json();
+      
+      timesContainer.innerHTML = '';
+      if (slots.length === 0) {
+        timesContainer.innerHTML = '<div class="text-muted small w-100 p-2">Aucune disponibilité ce jour-là.</div>';
+        return;
+      }
+      
+      slots.forEach(t => {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        slot.textContent = t;
+        slot.onclick = () => {
+          document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('active'));
+          slot.classList.add('active');
+          selectedTime = t;
+          updateFormStatus();
+        };
+        timesContainer.appendChild(slot);
+      });
+    } catch(e) {
+      timesContainer.innerHTML = '<div class="text-danger small w-100 p-2">Erreur chargement des horaires.</div>';
+    }
+  }
+
+  function updateFormStatus() {
+    if (selectedDate && selectedTime) {
+      hiddenInput.value = `${selectedDate}T${selectedTime}`;
+      submitBtn.disabled = false;
+    } else {
+      hiddenInput.value = '';
+      submitBtn.disabled = true;
+    }
+  }
+});
+</script>
 {% endblock %}

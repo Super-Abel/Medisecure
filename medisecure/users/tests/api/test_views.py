@@ -34,7 +34,22 @@ class TestUserViewSet:
 
         response = view.me(request)  # type: ignore[call-arg, arg-type, misc]
 
-        assert response.data == {
+        response_data = response.data.copy()
+        response_date_joined = response_data.pop("date_joined")
+        assert response_date_joined is not None
+
+        assert response_data == {
+            "id": user.id,
             "url": f"http://testserver/api/users/{user.pk}/",
-            "name": user.name,
+            "nom": user.nom,
+            "prenom": user.prenom,
+            "email": user.email,
+            "telephone": user.telephone,
+            "role": user.role,
+            "statut": user.statut,
+            "failed_attempts": user.failed_attempts,
+            "locked_until": user.locked_until,
+            "last_login": user.last_login,
+            "patient_profile": None,
+            "medecin_profile": None,
         }

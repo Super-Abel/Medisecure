@@ -1,29 +1,44 @@
 from rest_framework import serializers
+from .models import Specialite, Cabinet, DossierMedical, Prescription, Consultation, ResultatAnalyse
 
 
-class SpecialiteSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    nom_specialite = serializers.CharField()
-    description = serializers.CharField(allow_blank=True)
+class SpecialiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Specialite
+        fields = "__all__"
 
 
-class CabinetSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    nom = serializers.CharField()
-    adresse = serializers.CharField(allow_blank=True)
-    telephone = serializers.CharField(allow_blank=True)
+class CabinetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cabinet
+        fields = "__all__"
 
 
-class DossierMedicalSerializer(serializers.Serializer):
-    id_dossier = serializers.IntegerField()
-    patient_id = serializers.IntegerField()
-    antecedents = serializers.CharField(allow_blank=True)
-    allergies = serializers.CharField(allow_blank=True)
-    traitements = serializers.CharField(allow_blank=True)
+class DossierMedicalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DossierMedical
+        fields = "__all__"
 
 
-class DossierMedicalCreateSerializer(serializers.Serializer):
-    patient_id = serializers.IntegerField()
-    antecedents = serializers.CharField(allow_blank=True, default="")
-    allergies = serializers.CharField(allow_blank=True, default="")
-    traitements = serializers.CharField(allow_blank=True, default="")
+class DossierMedicalCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DossierMedical
+        fields = ["patient", "antecedents", "allergies", "traitements", "notes_medecin"]
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prescription
+        fields = "__all__"
+
+
+class ConsultationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Consultation
+        fields = "__all__"
+
+
+class ResultatAnalyseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatAnalyse
+        fields = "__all__"

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Notifications - Médecin{% endblock %}
+{% block content %}
+<style>
+  .header-name { font-size:24px; font-weight:800; color:#1e293b; margin-bottom: 20px;}
+  .notif-item { background:#fff; border-radius:16px; padding:16px; margin-bottom:12px; border:1px solid #e5e9ef; display:flex; gap:16px; cursor:pointer; transition:0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+  .notif-item.unread { border-left:4px solid #1a56db; }
+  .notif-item:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05);}
+  .notif-icon-wrap { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .notif-body { flex:1; }
+  .notif-title { font-size:14px; font-weight:700; color:#1e293b; margin-bottom:4px; }
+  .notif-msg { font-size:13px; color:#64748b; line-height:1.4; }
+  .notif-time { font-size:11px; color:#94a3b8; margin-top:6px; font-weight:600; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="header-name mb-0">Notifications <span id="unreadCount" class="badge bg-danger rounded-pill fs-6 ms-2 d-none">0</span></div>
+  <a href="#" id="markAllReadBtn" class="text-primary text-decoration-none small fw-bold">Tout marquer lu</a>
+</div>
+
+<div class="notifications-list" id="notifList" style="max-width: 600px; margin: 0 auto;">
+  <div class="text-center py-5 text-muted">
+    <div class="spinner-border text-primary" role="status"></div>
+    <div class="mt-2 text-sm">Chargement...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block inline_javascript %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const csrfToken = '{{ csrf_token }}';
+  const notifList = document.getElementById('notifList');
+  const unreadCountBadge = document.getElementById('unreadCount');
+  const markAllReadBtn = document.getElementById('markAllReadBtn');
+
+  function getIconProps(type) {
+    type = (type || "").toLowerCase();
+    if(type.includes('rappel') || type.includes('rendez-vous')) return {icon: '📅', bg: '#eff6ff'};
+    if(type.includes('dossier') || type.includes('résultat')) return {icon: '📋', bg: '#f5f3ff'};
+    if(type.includes('sécurité') || type.includes('alerte')) return {icon: '🔒', bg: '#fef2f2'};
+    return {icon: '🔔', bg: '#f8fafc'};
+  }
+
+  function formatTimeAgo(dateStr) {
+    const d = new Date(dateStr), now = new Date();
+    const diffMin = Math.floor((now - d) / 60000);
+    if(diffMin < 60) return `Il y a ${Math.max(1, diffMin)} min`;
+    const diffHours = Math.floor(diffMin / 60);
+    if(diffHours < 24) return `Il y a ${diffHours} h`;
+    return d.toLocaleDateString('fr-FR');
+  }
+
+  window.markRead = async function(id, el) {
+    if(!el.classList.contains('unread')) return;
+    await fetch(`/api/notifications/${id}/read/`, { method: 'PATCH', headers: { 'X-CSRFToken': csrfToken } });
+    el.classList.remove('unread');
+    const dot = el.querySelector('.unread-dot');
+    if(dot) dot.remove();
+    updateUnreadCount();
+  };
+
+  markAllReadBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const res = await fetch('/api/notifications/read-all/', { method: 'PATCH', headers: { 'X-CSRFToken': csrfToken } });
+    if(res.ok) loadNotifications();
+  });
+
+  async function updateUnreadCount() {
+    const res = await fetch('/api/notifications/unread-count/');
+    const data = await res.json();
+    if(data.count > 0) { unreadCountBadge.textContent = data.count; unreadCountBadge.classList.remove('d-none'); }
+    else { unreadCountBadge.classList.add('d-none'); }
+  }
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch('/api/notifications/');
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      if(!data.length) {
+        notifList.innerHTML = '<p class="text-center text-muted py-5"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i>Aucune notification</p>';
+        return;
+      }
+      notifList.innerHTML = data.map(n => {
+        const isUnread = n.statut === 'ENVOYE';
+        const props = getIconProps(n.type);
+        return `<div class="notif-item ${isUnread ? 'unread' : ''}" onclick="markRead(${n.id}, this)">
+          <div class="notif-icon-wrap" style="background:${props.bg}">${props.icon}</div>
+          <div class="notif-body">
+            <div class="notif-title">${n.type || 'Notification Système'}</div>
+            <div class="notif-msg">${n.message}</div>
+            <div class="notif-time">${formatTimeAgo(n.date_envoi)}</div>
+          </div>
+          ${isUnread ? '<div class="unread-dot" style="width:8px;height:8px;background:#1a56db;border-radius:50%;margin-top:6px;"></div>' : ''}
+        </div>`;
+      }).join('');
+      updateUnreadCount();
+    } catch(e) {
+      notifList.innerHTML = '<div class="alert alert-danger text-center">Impossible de charger les notifications</div>';
+    }
+  }
+
+  loadNotifications();
+});
+</script>
+{% endblock inline_javascript %}

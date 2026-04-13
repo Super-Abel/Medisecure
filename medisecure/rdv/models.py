@@ -17,7 +17,9 @@ class RendezVous(models.Model):
         "users.Medecin", on_delete=models.CASCADE, related_name="rdv"
     )
     date_heure = models.DateTimeField()
+    duree = models.IntegerField(_("Durée en minutes"), default=30)
     motif = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(_("Notes"), blank=True)
     statut = models.CharField(
         max_length=20, choices=StatutRDV.choices, default=StatutRDV.EN_ATTENTE
     )

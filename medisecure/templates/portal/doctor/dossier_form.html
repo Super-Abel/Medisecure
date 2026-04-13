@@ -1,31 +1,120 @@
 {% extends "base.html" %} {% load crispy_forms_tags %} {% block title %}Édition
 Dossier - {{ patient.user.nom }}{% endblock %} {% block content %}
+<style>
+  .medical-header { background: linear-gradient(135deg, #0f766e, #0d9488); padding: 25px 20px; color: #fff; border-radius: 20px; margin-bottom: 20px; }
+  .record-section { background: #fff; border-radius: 16px; border: 1px solid #e5e9ef; margin-bottom: 12px; overflow: hidden; }
+  .record-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+  .record-header:hover { background: #f8fafc; }
+  .record-title { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+  .record-body { padding: 0 20px 20px; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+  .record-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #f1f5f9; font-size: 14px; }
+  .record-row:last-child { border-bottom: none; }
+  .record-key { color: #64748b; font-weight: 600; }
+  .record-val { color: #1e293b; text-align: right; max-width: 65%; font-weight: 500;}
+  .rx-card { background: #f8fafc; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #e2e8f0;}
+  .rx-name { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .rx-dose { font-size: 13px; color: #64748b; }
+</style>
+
 <div class="row justify-content-center mb-5">
   <div class="col-lg-8">
-    <div class="ms-card p-0 overflow-hidden">
-      <div class="card-header bg-transparent border-0 px-4 py-4">
-        <div class="d-flex align-items-center">
-          <a href="{% url 'portal:doctor-patients' %}" class="ms-btn ms-btn-secondary p-2 me-3" style="width: 40px; height: 40px; justify-content: center; border-radius: 50%;">
-            <i class="bi bi-arrow-left"></i>
-          </a>
-          <h5 class="mb-0 fw-bold">
-            Dossier de {{ patient.user.prenom }} {{ patient.user.nom }}
-          </h5>
+    <div class="medical-header">
+      <div class="d-flex align-items-center mb-3">
+        <a href="{% url 'portal:doctor-patients' %}" class="text-white text-decoration-none me-3"><i class="bi bi-arrow-left fs-4"></i></a>
+        <h4 class="mb-0 fw-bold">📋 Dossier Médical</h4>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <div class="badge bg-white text-teal rounded-pill px-3 py-2 fw-bold" style="color: #0f766e;">{{ patient.user.prenom }} {{ patient.user.nom }}</div>
+      </div>
+      <div class="small opacity-75">🔒 Données chiffrées — Accès tracé</div>
+    </div>
+
+    <!-- Accordion Bootstrap natif modifié pour correspondre au design -->
+    <div class="accordion" id="dossierAccordion">
+      
+      <!-- Infos personnelles -->
+      <div class="record-section">
+        <div class="record-header collapsed" data-bs-toggle="collapse" data-bs-target="#collapseInfo">
+          <div class="record-title">👤 Informations personnelles</div>
+          <i class="bi bi-chevron-down text-muted"></i>
+        </div>
+        <div id="collapseInfo" class="collapse" data-bs-parent="#dossierAccordion">
+          <div class="record-body">
+            <div class="record-row"><span class="record-key">Nom complet</span><span class="record-val">{{ patient.user.prenom }} {{ patient.user.nom }}</span></div>
+            <div class="record-row"><span class="record-key">Email</span><span class="record-val">{{ patient.user.email }}</span></div>
+            <div class="record-row"><span class="record-key">Date de naissance</span><span class="record-val">{{ patient.date_naissance|date:"d/m/Y" }}</span></div>
+            <div class="record-row"><span class="record-key">Sexe</span><span class="record-val">{{ patient.sexe }}</span></div>
+            <div class="record-row"><span class="record-key">Groupe Sanguin</span><span class="record-val">{{ patient.groupe_sanguin|default:"Inconnu" }}</span></div>
+            <div class="record-row"><span class="record-key">Poids / Taille</span><span class="record-val">{{ patient.poids|default:"-" }} kg / {{ patient.taille|default:"-" }} cm</span></div>
+          </div>
         </div>
       </div>
-      <div class="card-body px-4 pb-4">
-        <form method="post" class="needs-validation">
-          {% csrf_token %} 
-          <div class="mb-3">
-            {{ form|crispy }}
+
+      <!-- Antécédents Médicaux / Formulaire Edition -->
+      <div class="record-section">
+        <div class="record-header" data-bs-toggle="collapse" data-bs-target="#collapseAntecedents">
+          <div class="record-title">🏥 Mises à jour & Antécédents</div>
+          <i class="bi bi-chevron-down text-muted"></i>
+        </div>
+        <div id="collapseAntecedents" class="collapse show" data-bs-parent="#dossierAccordion">
+          <div class="record-body bg-light rounded-3 mt-2">
+            <form method="post" class="needs-validation">
+              {% csrf_token %} 
+              <div class="mb-3">
+                {{ form|crispy }}
+              </div>
+              <div class="text-end mt-3">
+                <button type="submit" class="ms-btn ms-btn-primary px-4">
+                  Enregistrer les antécédents
+                </button>
+              </div>
+            </form>
           </div>
-          <div class="text-end mt-4">
-            <button type="submit" class="ms-btn ms-btn-primary px-5 py-3">
-              Sauvegarder les modifications
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
+
+      <!-- Ordonnances Actives -->
+      <div class="record-section">
+        <div class="record-header collapsed" data-bs-toggle="collapse" data-bs-target="#collapseRx">
+          <div class="record-title">💊 Ordonnances actives</div>
+          <i class="bi bi-chevron-down text-muted"></i>
+        </div>
+        <div id="collapseRx" class="collapse" data-bs-parent="#dossierAccordion">
+          <div class="record-body">
+            {% for rx in patient.prescriptions.all %}
+            <div class="rx-card">
+              <div class="rx-name">Ordonnance du {{ rx.date_prescription|date:"d/m/Y" }}</div>
+              <div class="rx-dose">{{ rx.medicaments }}</div>
+              <div class="small text-muted mt-2">Valide jusqu'au: {{ rx.date_fin_validite|date:"d/m/Y" }}</div>
+            </div>
+            {% empty %}
+            <p class="text-muted small mb-0 text-center py-3">Aucune ordonnance listée.</p>
+            {% endfor %}
+            <button class="ms-btn ms-btn-primary w-100 mt-3" onclick="alert('Module d\'ordonnance en cours de connexion API.');">+ Nouvelle ordonnance</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultats Analyses -->
+      <div class="record-section">
+        <div class="record-header collapsed" data-bs-toggle="collapse" data-bs-target="#collapseResults">
+          <div class="record-title">🔬 Résultats d'analyses</div>
+          <i class="bi bi-chevron-down text-muted"></i>
+        </div>
+        <div id="collapseResults" class="collapse" data-bs-parent="#dossierAccordion">
+          <div class="record-body">
+            {% for res in patient.resultats.all %}
+            <div class="record-row pb-2 mb-2 border-bottom">
+              <span class="record-key fw-bold text-dark">{{ res.type_analyse }}</span>
+              <span class="record-val">{{ res.date_resultat|date:"d/m/Y" }}</span>
+            </div>
+            {% empty %}
+            <p class="text-muted small mb-0 text-center py-3">Aucun résultat d'analyse disponible.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

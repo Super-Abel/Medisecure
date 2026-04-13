@@ -33,6 +33,9 @@ class TestUserAdmin:
                 "email": "new-admin@example.com",
                 "password1": "My_R@ndom-P@ssw0rd",
                 "password2": "My_R@ndom-P@ssw0rd",
+                "nom": "A",
+                "prenom": "B",
+                "role": "PATIENT",
             },
         )
         assert response.status_code == HTTPStatus.FOUND

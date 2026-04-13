@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Planning - Médecin{% endblock %}
+{% block content %}
+<style>
+  .appts-header { background: linear-gradient(135deg,#1a56db,#0e3fa5); margin: -20px -20px 20px -20px; padding: 30px 20px 16px; color: #fff; border-radius: 0 0 24px 24px; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .month-title { font-size: 18px; font-weight: 700; }
+  .nav-arr { background: rgba(255,255,255,.15); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .week-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; justify-content: space-between; }
+  .week-row::-webkit-scrollbar { display: none; }
+  .day-pill { flex: 1; min-width: 40px; padding: 12px 0; border-radius: 16px; text-align: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; border: 1px solid rgba(255,255,255,.1); }
+  .day-pill.active { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .day-pill .d-name { font-size: 11px; font-weight: 600; opacity: 0.8; text-transform: uppercase; margin-bottom: 2px; }
+  .day-pill .d-num { font-size: 18px; font-weight: 800; color: #fff; line-height: 1.2; }
+  .day-pill.active .d-name, .day-pill.active .d-num { color: #1a56db; }
+  .appt-slot { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid #e5e9ef; display: flex; gap: 16px; align-items: center; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; }
+  .appt-slot:hover { border-color: #1a56db; box-shadow: 0 4px 15px rgba(26,86,219,0.05); }
+  .slot-time-col { text-align: center; min-width: 56px; }
+  .slot-time { font-size: 15px; font-weight: 800; color: #1a56db; }
+  .slot-dur { font-size: 11px; color: #94a3b8; font-weight: 600; margin-top: 2px;}
+  .slot-divider { width: 3px; background: #f1f5f9; height: 46px; border-radius: 3px; }
+  .slot-body { flex: 1; }
+  .slot-doc { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .slot-spec { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+  .badge-confirmed { background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+  .badge-pending { background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+</style>
+
+<div class="appts-header shadow-sm">
+  <div class="month-nav">
+    <button class="nav-arr" onclick="changeWeek(-1)">&#8249;</button>
+    <div class="d-flex align-items-center gap-2">
+      <div class="month-title" id="monthTitle">--</div>
+      <button class="btn btn-sm btn-light bg-opacity-25 text-white border-0" onclick="openConfig()" style="border-radius: 12px; padding: 4px 8px;">⚙️ Horaires</button>
+    </div>
+    <button class="nav-arr" onclick="changeWeek(1)">&#8250;</button>
+  </div>
+  <div class="week-row" id="weekRow"></div>
+</div>
+
+<div class="content-body" style="max-width: 600px; margin: 0 auto;">
+  <h6 class="fw-bold text-muted text-uppercase small mb-3" id="rdvDateLabel">Rendez-vous prévus</h6>
+  <div id="rdvList">
+    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+  </div>
+</div>
+
+<!-- Modal de configuration des disponibilités -->
+<div id="configModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:90%; max-width:400px; border-radius:20px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="fw-bold mb-0">⚙️ Configurer mes horaires</h5>
+      <button class="btn-close" onclick="document.getElementById('configModal').style.display='none'"></button>
+    </div>
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label class="form-label text-muted small fw-bold">Date spécifique</label>
+      <input type="date" id="availDate" class="form-select border-0 bg-light-subtle py-2 px-3" style="border-radius: 10px;">
+    </div>
+    <div class="row g-2 mb-4">
+      <div class="col-6">
+        <label class="form-label text-muted small fw-bold">Heure de début</label>
+        <input type="time" id="availStart" class="form-control border-0 bg-light-subtle py-2" value="09:00" style="border-radius: 10px;">
+      </div>
+      <div class="col-6">
+        <label class="form-label text-muted small fw-bold">Heure de fin</label>
+        <input type="time" id="availEnd" class="form-control border-0 bg-light-subtle py-2" value="18:00" style="border-radius: 10px;">
+      </div>
+    </div>
+    <button class="ms-btn ms-btn-primary w-100 justify-content-center py-3" id="btnSaveAvail" onclick="saveAvail()">
+      Enregistrer
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+{% block inline_javascript %}
+<script>
+  const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  let currentMonday = getMonday(new Date());
+  let selectedDate = toYMD(new Date());
+
+  function openConfig() {
+    document.getElementById('availDate').value = selectedDate;
+    document.getElementById('configModal').style.display = 'flex';
+  }
+
+  function getMonday(d) {
+    const day = d.getDay(); // 0=Sun
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const m = new Date(d);
+    m.setDate(diff);
+    return m;
+  }
+
+  function toYMD(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function changeWeek(dir) {
+    currentMonday = new Date(currentMonday);
+    currentMonday.setDate(currentMonday.getDate() + dir * 7);
+    renderWeek();
+  }
+
+  function renderWeek() {
+    const row = document.getElementById('weekRow');
+    row.innerHTML = '';
+    const todayStr = toYMD(new Date());
+
+    document.getElementById('monthTitle').textContent =
+      MONTHS_FR[currentMonday.getMonth()] + ' ' + currentMonday.getFullYear();
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(currentMonday);
+      d.setDate(d.getDate() + i);
+      const dStr = toYMD(d);
+      const pill = document.createElement('div');
+      const isToday = dStr === todayStr;
+      const isSelected = dStr === selectedDate;
+      pill.className = 'day-pill' + (isSelected ? ' active' : '');
+      pill.innerHTML = `<div class="d-name">${DAYS_FR[d.getDay()]}</div><div class="d-num">${d.getDate()}</div>`;
+      pill.onclick = () => { selectedDate = dStr; renderWeek(); loadRdv(dStr); };
+      row.appendChild(pill);
+    }
+  }
+
+  async function loadRdv(dateStr) {
+    const list = document.getElementById('rdvList');
+    const label = document.getElementById('rdvDateLabel');
+    list.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+    const d = new Date(dateStr + 'T00:00:00');
+    label.textContent = `RDV — ${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`;
+    try {
+      const resp = await fetch(`/api/planning/rdvs/?date=${dateStr}`, { headers: { 'Accept': 'application/json' } });
+      const rdvs = await resp.json();
+      if (!rdvs.length) {
+        list.innerHTML = `<div class="text-center py-5 text-muted">
+          <div class="mb-3"><i class="bi bi-cup-hot" style="font-size:3rem;color:#cbd5e1;"></i></div>
+          <h6 class="fw-bold mb-1">Aucun RDV ce jour</h6>
+          <p class="small">Profitez d'un planning allégé.</p>
+        </div>`;
+        return;
+      }
+      list.innerHTML = rdvs.map(r => `
+        <a href="/portal/doctor/patients/${r.patient_id}/dossier/" class="appt-slot">
+          <div class="slot-time-col">
+            <div class="slot-time">${r.heure}</div>
+            <div class="slot-dur">30 min</div>
+          </div>
+          <div class="slot-divider"></div>
+          <div class="slot-body">
+            <div class="slot-doc">${r.patient_nom}</div>
+            <div class="slot-spec">${r.motif}</div>
+            <span class="${r.statut === 'CONFIRME' ? 'badge-confirmed' : 'badge-pending'}">${r.statut === 'CONFIRME' ? 'Confirmé' : 'En attente'}</span>
+          </div>
+          <i class="bi bi-chevron-right text-muted"></i>
+        </a>`).join('');
+    } catch (e) {
+      list.innerHTML = '<div class="alert alert-danger">Erreur de chargement.</div>';
+    }
+  }
+
+  async function saveAvail() {
+    const btn = document.getElementById('btnSaveAvail');
+    const date = document.getElementById('availDate').value;
+    const start = document.getElementById('availStart').value;
+    const end = document.getElementById('availEnd').value;
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrf = csrfInput ? csrfInput.value : '';
+
+    if (!date || !start || !end) return alert('Veuillez remplir tous les champs.');
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/medecins/me/disponibilites/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ date_specifique: date, heure_debut: start, heure_fin: end })
+      });
+      if (!res.ok) throw new Error();
+      alert('Horaires enregistrés pour le ' + date);
+      document.getElementById('configModal').style.display = 'none';
+      renderWeek();
+      loadRdv(selectedDate);
+    } catch (e) {
+      alert('Erreur lors de la sauvegarde.');
+    } finally {
+      btn.innerHTML = 'Enregistrer';
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderWeek();
+    loadRdv(selectedDate);
+    
+    // Fermer la modale si clic hors cadre
+    window.onclick = function(event) {
+      const mod = document.getElementById('configModal');
+      if (event.target == mod) { mod.style.display = 'none'; }
+    }
+  });
+</script>
+{% endblock inline_javascript %}

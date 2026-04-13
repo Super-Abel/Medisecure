@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -17,7 +17,11 @@ from .serializers import (
     CabinetSerializer,
     DossierMedicalSerializer,
     DossierMedicalCreateSerializer,
+    PrescriptionSerializer,
+    ConsultationSerializer,
+    ResultatAnalyseSerializer,
 )
+from .models import Prescription, Consultation, ResultatAnalyse
 
 
 class SpecialiteListView(APIView):
@@ -77,8 +81,16 @@ class DossierMedicalView(APIView):
         summary="Récupérer le dossier médical d'un patient",
         tags=["Dossier Médical"],
     )
-    def get(self, request, patient_id: int):
+    def get(self, request, patient_id=None):
         service = DossierMedicalService(DjangoDossierMedicalRepository())
+
+        # Gestion de l'alias 'my' pour le mobile
+        if patient_id is None:
+            if hasattr(request.user, "patient_profile"):
+                patient_id = request.user.patient_profile.id
+            else:
+                return Response({"detail": "Vous n'êtes pas un patient."}, status=403)
+
         dossier = service.get_patient_dossier(patient_id)
         if not dossier:
             return Response(
@@ -117,3 +129,32 @@ class DossierMedicalView(APIView):
         return Response(
             {"id_dossier": dossier.id_dossier, "patient_id": dossier.patient_id}
         )
+
+
+class MedicalBaseViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, "role", "") == "PATIENT":
+            return self.queryset.filter(dossier__patient__user=user)
+        elif getattr(user, "role", "") == "MEDECIN" and hasattr(
+            self.queryset.model, "medecin"
+        ):
+            return self.queryset.filter(medecin__user=user)
+        return self.queryset.all()
+
+
+class PrescriptionViewSet(MedicalBaseViewSet):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
+
+
+class ConsultationViewSet(MedicalBaseViewSet):
+    queryset = Consultation.objects.all()
+    serializer_class = ConsultationSerializer
+
+
+class ResultatAnalyseViewSet(MedicalBaseViewSet):
+    queryset = ResultatAnalyse.objects.all()
+    serializer_class = ResultatAnalyseSerializer

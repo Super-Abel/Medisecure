@@ -14,20 +14,31 @@ from medisecure.users.api_views import (
     ResetPasswordView,
     PatientRegistrationView,
     MedecinRegistrationView,
+    PatientRegistrationView,
+    MedecinRegistrationView,
     VerifyEmailView,
+    CustomTokenRefreshView,
 )
 from medisecure.users.admin_views import LogActiviteListView, UserRoleUpdateView
 from medisecure.users.profile_views import (
     NotificationListView,
     NotificationMarkReadView,
+    NotificationReadAllView,
+    NotificationUnreadCountView,
     PatientListView,
     PatientDetailView,
     MedecinListView,
+    PlanningRdvByDateView,
+    AvailableSlotsView,
+    UpdateAvailabilityView,
 )
 from medisecure.medical.api_views import (
     SpecialiteListView,
     CabinetListView,
     DossierMedicalView,
+    PrescriptionViewSet,
+    ConsultationViewSet,
+    ResultatAnalyseViewSet,
 )
 from medisecure.rdv.api_views import (
     PatientRDVListView,
@@ -37,12 +48,15 @@ from medisecure.rdv.api_views import (
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 router.register("users", UserViewSet)
+router.register("prescriptions", PrescriptionViewSet)
+router.register("consultations", ConsultationViewSet)
+router.register("resultats-labo", ResultatAnalyseViewSet)
 
 app_name = "api"
 urlpatterns = router.urls + [
     # Tokens JWT
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
     # Auth
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
@@ -65,6 +79,16 @@ urlpatterns = router.urls + [
         "patients/<int:patient_id>/", PatientDetailView.as_view(), name="patient-detail"
     ),
     path("medecins/", MedecinListView.as_view(), name="medecins"),
+    path(
+        "medecins/<int:medecin_id>/slots/",
+        AvailableSlotsView.as_view(),
+        name="medecin-slots",
+    ),
+    path(
+        "medecins/me/disponibilites/",
+        UpdateAvailabilityView.as_view(),
+        name="medecin-disponibilites-update",
+    ),
     # Médical
     path("specialites/", SpecialiteListView.as_view(), name="specialites"),
     path("cabinets/", CabinetListView.as_view(), name="cabinets"),
@@ -85,12 +109,21 @@ urlpatterns = router.urls + [
         name="rdv-planning",
     ),
     path("rdv/<int:rdv_id>/", RDVDetailView.as_view(), name="rdv-detail"),
-    # Notifications
     path("notifications/", NotificationListView.as_view(), name="notifications"),
     path(
         "notifications/<int:notif_id>/read/",
         NotificationMarkReadView.as_view(),
         name="notification-read",
+    ),
+    path(
+        "notifications/read-all/",
+        NotificationReadAllView.as_view(),
+        name="notifications-read-all",
+    ),
+    path(
+        "notifications/unread-count/",
+        NotificationUnreadCountView.as_view(),
+        name="notifications-unread-count",
     ),
     # Administration
     path("admin/logs/", LogActiviteListView.as_view(), name="logs"),
@@ -99,4 +132,30 @@ urlpatterns = router.urls + [
         UserRoleUpdateView.as_view(),
         name="user-role",
     ),
+    # --- Alias pour l'App Mobile ---
+    # Auth
+    path("auth/refresh", CustomTokenRefreshView.as_view(), name="mobile-auth-refresh"),
+    # Appointments
+    path(
+        "appointments/", PatientRDVListView.as_view(), name="mobile-appointments-list"
+    ),
+    path(
+        "appointments/<int:rdv_id>",
+        RDVDetailView.as_view(),
+        name="mobile-appointment-detail",
+    ),
+    path(
+        "appointments/slots/<int:medecin_id>",
+        AvailableSlotsView.as_view(),
+        name="mobile-appointment-slots",
+    ),
+    # Records
+    path("records/my", DossierMedicalView.as_view(), name="mobile-record-my"),
+    path(
+        "records/<int:patient_id>",
+        DossierMedicalView.as_view(),
+        name="mobile-record-detail",
+    ),
+    # Fin Aliases
+    path("planning/rdvs/", PlanningRdvByDateView.as_view(), name="planning-rdvs"),
 ]

@@ -1,22 +1,20 @@
 from rest_framework import serializers
+from .models import RendezVous
 
 
-class RendezVousSerializer(serializers.Serializer):
-    id_rdv = serializers.IntegerField()
-    patient_id = serializers.IntegerField()
-    medecin_id = serializers.IntegerField()
-    date_heure = serializers.DateTimeField()
-    motif = serializers.CharField(allow_blank=True)
-    statut = serializers.CharField()
+class RendezVousSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RendezVous
+        fields = "__all__"
 
 
-class RendezVousCreateSerializer(serializers.Serializer):
-    patient_id = serializers.IntegerField()
-    medecin_id = serializers.IntegerField()
-    date_heure = serializers.DateTimeField()
-    motif = serializers.CharField(allow_blank=True, default="")
+class RendezVousCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RendezVous
+        fields = ["patient", "medecin", "date_heure", "duree", "motif", "notes"]
 
 
-class RendezVousUpdateSerializer(serializers.Serializer):
-    date_heure = serializers.DateTimeField(required=False)
-    motif = serializers.CharField(required=False, allow_blank=True)
+class RendezVousUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RendezVous
+        fields = ["date_heure", "duree", "motif", "notes", "statut"]

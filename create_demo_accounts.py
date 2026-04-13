@@ -22,8 +22,11 @@ def create_users():
             "role": Roles.ADMIN,
             "is_staff": True,
             "is_superuser": True,
+            "statut": True,
         },
     )
+    admin.is_active = True
+    admin.statut = True
     admin.set_password("demo1234")
     admin.save()
     print("Admin user ready: admin@demo.com / demo1234")
@@ -35,8 +38,11 @@ def create_users():
             "nom": "Dupont",
             "prenom": "Jean",
             "role": Roles.PATIENT,
+            "statut": True,
         },
     )
+    patient_user.is_active = True
+    patient_user.statut = True
     patient_user.set_password("demo1234")
     patient_user.save()
     Patient.objects.get_or_create(
@@ -56,8 +62,11 @@ def create_users():
             "nom": "Smith",
             "prenom": "John",
             "role": Roles.MEDECIN,
+            "statut": True,
         },
     )
+    doctor_user.is_active = True
+    doctor_user.statut = True
     doctor_user.set_password("demo1234")
     doctor_user.save()
 
@@ -68,15 +77,12 @@ def create_users():
         nom="Cabinet Coeur Santé", defaults={"adresse": "45 Ave de la République"}
     )
 
-    Medecin.objects.get_or_create(
-        user=doctor_user,
-        defaults={
-            "specialite": specialite,
-            "cabinet": cabinet,
-            "telephone_pro": "0102030405",
-            "numero_rpps": "10012345678",
-        },
-    )
+    # Handle doctor profile update robustly due to auto-creation signals
+    medecin_profile, _ = Medecin.objects.get_or_create(user=doctor_user)
+    medecin_profile.specialite = specialite
+    medecin_profile.cabinet = cabinet
+    medecin_profile.numero_licence = "LIC-10012345678"
+    medecin_profile.save()
     print("Doctor user ready: doctor@demo.com / demo1234")
 
 

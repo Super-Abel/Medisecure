@@ -9,10 +9,13 @@ from medisecure.users.models import User
 
 class UserFactory(DjangoModelFactory[User]):
     email = Faker("email")
-    name = Faker("name")
+    nom = Faker("first_name")
+    prenom = Faker("last_name")
 
     @post_generation
-    def password(self: User, create: bool, extracted: str | None, **kwargs):  # noqa: FBT001
+    def password(
+        self: User, create: bool, extracted: str | None, **kwargs
+    ):  # noqa: FBT001
         password = (
             extracted
             if extracted
