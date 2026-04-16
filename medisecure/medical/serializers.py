@@ -84,9 +84,7 @@ class DossierMedicalMobileSerializer(serializers.ModelSerializer):
     )
 
     patient = serializers.IntegerField(source="patient.id", read_only=True)
-    resultats_labo = LabResultMobileSerializer(
-        source="resultats_labo", many=True, read_only=True
-    )
+    resultats_labo = LabResultMobileSerializer(many=True, read_only=True)
     signes_vitaux = SignesVitauxSerializer(many=True, read_only=True)
 
     class Meta:
