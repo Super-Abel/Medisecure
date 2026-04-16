@@ -1,4 +1,5 @@
 from django.urls import path
+from medisecure.medical.api_views import DossierPDFView
 from .views import (
     PatientDashboardView,
     PatientDossierView,
@@ -12,6 +13,8 @@ from .views import (
     DoctorPlanningView,
     DoctorMessagesView,
     DoctorNotificationsView,
+    NurseDashboardView,
+    NursePatientListView,
 )
 
 app_name = "portal"
@@ -43,5 +46,17 @@ urlpatterns = [
         "doctor/rdv/<int:rdv_id>/finish/",
         ConsultationFinishView.as_view(),
         name="rdv-finish",
+    ),
+    path("nurse/", NurseDashboardView.as_view(), name="nurse-dashboard"),
+    path("nurse/patients/", NursePatientListView.as_view(), name="nurse-patients"),
+    path(
+        "patients/<int:patient_id>/dossier/pdf/",
+        DossierPDFView.as_view(),
+        name="dossier-pdf",
+    ),
+    path(
+        "patients/dossier/pdf/",
+        DossierPDFView.as_view(),
+        name="dossier-pdf-self",
     ),
 ]

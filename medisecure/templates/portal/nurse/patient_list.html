@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des Patients - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">Dossiers Patients</h1>
+    <p class="text-muted">Consultez et mettez à jour les informations médicales</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="ms-card p-0 overflow-hidden">
+      <div class="card-header bg-transparent border-0 px-4 py-4">
+        <h5 class="mb-0 fw-bold">Tous les patients</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="ms-table mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Patient</th>
+              <th>Sexe</th>
+              <th>Groupe Sanguin</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+            <tr>
+              <td class="ps-4">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: 700;">
+                    {{ patient.user.prenom|first }}{{ patient.user.nom|first }}
+                  </div>
+                  <div>
+                    <div class="fw-bold">{{ patient.user.prenom }} {{ patient.user.nom }}</div>
+                    <div class="small text-muted">{{ patient.user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ patient.sexe|default:"-" }}</td>
+              <td>
+                {% if patient.groupe_sanguin %}
+                  <span class="badge bg-danger bg-opacity-10 text-danger">{{ patient.groupe_sanguin }}</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="text-end pe-4">
+                <a href="{% url 'portal:doctor-dossier' patient.id %}" class="ms-btn ms-btn-primary btn-sm">Voir Dossier</a>
+                <a href="{% url 'portal:dossier-pdf' patient.id %}" class="ms-btn btn-sm btn-outline-secondary ms-1">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5 text-muted">
+                <p>Aucun patient trouvé.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
