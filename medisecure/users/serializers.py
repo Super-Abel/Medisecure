@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    password = serializers.CharField()
 
 
 class UserSerializer(serializers.Serializer):
@@ -37,3 +38,11 @@ class MedecinRegistrationSerializer(serializers.Serializer):
     numero_licence = serializers.CharField()
     specialite_id = serializers.IntegerField()
     cabinet_id = serializers.IntegerField(required=False, allow_null=True)
+
+
+class NurseRegistrationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    nom = serializers.CharField()
+    prenom = serializers.CharField()
+    telephone = serializers.CharField(required=False, allow_blank=True)

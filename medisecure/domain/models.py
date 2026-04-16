@@ -7,6 +7,7 @@ from typing import Optional
 class UserRole(Enum):
     PATIENT = "PATIENT"
     MEDECIN = "MEDECIN"
+    INFIRMIER = "INFIRMIER"
     ADMIN = "ADMIN"
 
 

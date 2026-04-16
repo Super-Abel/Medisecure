@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Déconnexion - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 rounded-3 p-4 text-center">
+      <h4 class="fw-bold mb-3">{% trans "Sign Out" %}</h4>
+      <p class="text-muted mb-4">{% trans "Are you sure you want to sign out?" %}</p>
+      <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        {{ redirect_field }}
+        <button type="submit" class="btn btn-danger w-100">{% trans "Sign Out" %}</button>
+      </form>
+      <a href="/" class="d-block mt-3 small text-muted">{% trans "Cancel" %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

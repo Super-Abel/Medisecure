@@ -102,7 +102,13 @@
 
     {% if request.user.is_authenticated %}
     <nav class="navbar fixed-bottom bg-white border-top shadow d-flex justify-content-around py-2 pb-3 mx-auto mb-3" style="z-index: 1050; border-radius: 30px; max-width: 500px;">
-      <a href="{% url 'portal:doctor-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:doctor-dashboard' or request.resolver_match.view_name == 'portal:patient-dashboard' or request.path == '/' %}text-primary{% else %}text-muted{% endif %}">
+      {% if request.user.role == 'INFIRMIER' %}
+      <a href="{% url 'portal:nurse-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:nurse-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% elif request.user.role == 'MEDECIN' %}
+      <a href="{% url 'portal:doctor-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:doctor-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% else %}
+      <a href="{% url 'portal:patient-dashboard' %}" class="text-center text-decoration-none {% if request.resolver_match.view_name == 'portal:patient-dashboard' %}text-primary{% else %}text-muted{% endif %}">
+      {% endif %}
         <i class="bi bi-house-door fs-5"></i>
         <div class="fw-bold mt-1" style="font-size: 10px;">Accueil</div>
       </a>
@@ -127,6 +133,15 @@
       <a href="{% url 'portal:doctor-patients' %}" class="text-center text-decoration-none {% if 'dossier' in request.path %}text-primary{% else %}text-muted{% endif %}">
         <i class="bi bi-folder2-open fs-5"></i>
         <div class="fw-bold mt-1" style="font-size: 10px;">Dossiers</div>
+      </a>
+      {% elif request.user.role == 'INFIRMIER' %}
+      <a href="{% url 'portal:nurse-patients' %}" class="text-center text-decoration-none {% if 'patients' in request.path %}text-primary{% else %}text-muted{% endif %}">
+        <i class="bi bi-people fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Patients</div>
+      </a>
+      <a href="#" class="text-center text-decoration-none text-muted">
+        <i class="bi bi-clipboard-check fs-5"></i>
+        <div class="fw-bold mt-1" style="font-size: 10px;">Soins</div>
       </a>
       {% endif %}
       <a href="{% if request.user.role == 'MEDECIN' %}{% url 'portal:doctor-notifications' %}{% else %}#{% endif %}" class="text-center text-decoration-none {% if 'notifications' in request.path %}text-primary{% else %}text-muted{% endif %} position-relative">

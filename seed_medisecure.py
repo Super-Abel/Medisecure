@@ -8,10 +8,18 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from allauth.account.models import EmailAddress
-from medisecure.medical.models import Specialite, Cabinet, DossierMedical
+from medisecure.medical.models import (
+    Specialite,
+    Cabinet,
+    DossierMedical,
+    SignesVitaux,
+    Consultation,
+    Prescription,
+    ResultatAnalyse,
+)
 from medisecure.rdv.models import RendezVous, StatutRDV
 from django.utils import timezone
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.db import transaction
 from allauth.account.models import EmailAddress
 from medisecure.users.models import Roles, Patient, Medecin
@@ -78,6 +86,30 @@ def seed_data():
             medecin.save()
             print(f"Docteur créé/mis à jour : {email}")
 
+    # 1b. Création de 2 Infirmiers
+    for i in range(1, 3):
+        email = f"nurse{i}@medisecure.com"
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                "nom": f"Infirmier{i}",
+                "prenom": f"Soin{i}",
+                "role": Roles.INFIRMIER,
+                "is_active": True,
+                "statut": True,
+            },
+        )
+        user.is_active = True
+        user.statut = True
+        user.save()
+        if created:
+            user.set_password(password)
+            user.save()
+            EmailAddress.objects.get_or_create(
+                user=user, email=email, defaults={"verified": True, "primary": True}
+            )
+            print(f"Infirmier créé : {email}")
+
     # 2. Création de 5 Patients
     for i in range(1, 6):
         email = f"patient{i}@medisecure.com"
@@ -129,6 +161,78 @@ def seed_data():
                 },
             )
         print("Rendez-vous créés.")
+
+    # 4. Création de Signes Vitaux pour les dossiers médicaux
+    print("\nCréation des signes vitaux...")
+    dossiers = DossierMedical.objects.all()
+    if dossiers.exists():
+        for dossier in dossiers:
+            # Créer 2 entrées de constantes par patient
+            for j in range(2):
+                SignesVitaux.objects.create(
+                    dossier=dossier,
+                    poids=70 + i + j,
+                    taille=170 + i,
+                    temperature=36.5 + j,
+                    tension_systolique=120 + j * 5,
+                    tension_diastolique=80 + j * 2,
+                    frequence_cardiaque=70 + j * 2,
+                    saturation_oxygene=98 + j,
+                    observations=f"Constantes de routine {j+1}/2",
+                )
+        print("Signes vitaux créés.")
+
+    # 5. Création de Consultations
+    print("\nCréation des consultations...")
+    if dossiers.exists() and medecins.exists():
+        for i, dossier in enumerate(dossiers):
+            Consultation.objects.create(
+                dossier=dossier,
+                medecin=medecins[i % medecins.count()],
+                date_consult=timezone.now() - timedelta(days=5),
+                diagnostic=(
+                    "Infection respiratoire mineure"
+                    if i % 2 == 0
+                    else "Suivi hypertension"
+                ),
+                observations="Patient réactif au traitement.",
+            )
+        print("Consultations créées.")
+
+    # 6. Création de Prescriptions
+    print("\nCréation des prescriptions...")
+    if dossiers.exists() and medecins.exists():
+        for i, dossier in enumerate(dossiers):
+            Prescription.objects.create(
+                dossier=dossier,
+                medecin=medecins[i % medecins.count()],
+                medicament="Amoxicilline" if i % 2 == 0 else "Lisinopril",
+                dosage="500mg" if i % 2 == 0 else "10mg",
+                posologie=(
+                    "1 comprimé 3 fois par jour"
+                    if i % 2 == 0
+                    else "1 comprimé le matin"
+                ),
+                date_debut=date.today() - timedelta(days=5),
+                date_fin=date.today() + timedelta(days=5),
+                is_active=True,
+            )
+        print("Prescriptions créées.")
+
+    # 7. Création de Résultats d'Analyses
+    print("\nCréation des résultats d'analyses...")
+    if dossiers.exists():
+        for dossier in dossiers:
+            ResultatAnalyse.objects.create(
+                dossier=dossier,
+                examen="Glycémie à jeun",
+                valeur="0.95",
+                unite="g/L",
+                norme="0.70 - 1.10",
+                statut="Normal",
+                date_examen=timezone.now() - timedelta(days=10),
+            )
+        print("Résultats d'analyses créés.")
 
     print("\nSeeding terminé avec succès !")
     print(f"Mot de passe pour tous les comptes : {password}")

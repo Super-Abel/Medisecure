@@ -26,21 +26,27 @@ class PatientRDVListView(APIView):
     def get(self, request, patient_id=None):
         svc = RendezVousService()
 
-        # Gestion de l'alias pour le mobile
+        # Detection du role pour servir le bon planning sur mobile
         if patient_id is None:
-            if hasattr(request.user, "patient_profile"):
-                patient_id = request.user.patient_profile.id
+            if hasattr(request.user, "medecin_profile"):
+                rdvs = svc.list_by_medecin(request.user.medecin_profile.id)
+            elif hasattr(request.user, "patient_profile"):
+                rdvs = svc.list_by_patient(request.user.patient_profile.id)
             else:
-                return Response({"detail": "Vous n'êtes pas un patient."}, status=403)
+                return Response({"detail": "Profil non trouvé."}, status=403)
+        else:
+            rdvs = svc.list_by_patient(patient_id)
 
-        rdvs = svc.list_by_patient(patient_id)
         return Response(
             [
                 {
                     "id": r.id_rdv,
+                    "id_rdv": r.id_rdv,
                     "patient_id": r.patient_id,
                     "doctor_id": r.medecin_id,
+                    "medecin_id": r.medecin_id,
                     "date_rdv": r.date_heure,
+                    "date_heure": r.date_heure,
                     "motif": r.motif,
                     "statut": r.statut,
                 }
@@ -108,9 +114,12 @@ class MedecinPlanningView(APIView):
         return Response(
             [
                 {
+                    "id": r.id_rdv,
                     "id_rdv": r.id_rdv,
                     "patient_id": r.patient_id,
+                    "doctor_id": r.medecin_id,
                     "medecin_id": r.medecin_id,
+                    "date_rdv": r.date_heure,
                     "date_heure": r.date_heure,
                     "motif": r.motif,
                     "statut": r.statut,
@@ -133,17 +142,23 @@ class RDVDetailView(APIView):
     def get(self, request, rdv_id: int):
         from .models import RendezVous
 
-        rdv = RendezVous.objects.get(id=rdv_id)
-        return Response(
-            {
-                "id_rdv": rdv.id,
-                "patient_id": rdv.patient_id,
-                "medecin_id": rdv.medecin_id,
-                "date_heure": rdv.date_heure,
-                "motif": rdv.motif,
-                "statut": rdv.statut,
-            }
-        )
+        try:
+            rdv = RendezVous.objects.get(id=rdv_id)
+            return Response(
+                {
+                    "id": rdv.id,
+                    "id_rdv": rdv.id,
+                    "patient_id": rdv.patient_id,
+                    "doctor_id": rdv.medecin_id,
+                    "medecin_id": rdv.medecin_id,
+                    "date_rdv": rdv.date_heure,
+                    "date_heure": rdv.date_heure,
+                    "motif": rdv.motif,
+                    "statut": rdv.statut,
+                }
+            )
+        except RendezVous.DoesNotExist:
+            return Response({"detail": "RDV introuvable."}, status=404)
 
     @extend_schema(
         request=RendezVousUpdateSerializer,
@@ -152,7 +167,11 @@ class RDVDetailView(APIView):
         tags=["Rendez-vous"],
     )
     def patch(self, request, rdv_id: int):
-        ser = RendezVousUpdateSerializer(data=request.data)
+        data = request.data.copy()
+        if "date_rdv" in data:
+            data["date_heure"] = data.pop("date_rdv")
+
+        ser = RendezVousUpdateSerializer(data=data, partial=True)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
         svc = RendezVousService()
@@ -162,7 +181,13 @@ class RDVDetailView(APIView):
                 {"detail": "RDV introuvable."}, status=status.HTTP_404_NOT_FOUND
             )
         return Response(
-            {"id_rdv": rdv.id_rdv, "statut": rdv.statut, "date_heure": rdv.date_heure}
+            {
+                "id": rdv.id_rdv,
+                "id_rdv": rdv.id_rdv,
+                "statut": rdv.statut,
+                "date_rdv": rdv.date_heure,
+                "date_heure": rdv.date_heure,
+            }
         )
 
     @extend_schema(
@@ -177,4 +202,4 @@ class RDVDetailView(APIView):
             return Response(
                 {"detail": "RDV introuvable."}, status=status.HTTP_404_NOT_FOUND
             )
-        return Response({"id_rdv": rdv.id_rdv, "statut": rdv.statut})
+        return Response({"id": rdv.id_rdv, "id_rdv": rdv.id_rdv, "statut": rdv.statut})

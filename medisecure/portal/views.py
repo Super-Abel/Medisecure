@@ -9,6 +9,7 @@ from medisecure.medical.models import Specialite, DossierMedical
 from medisecure.rdv.forms import RendezVousForm
 from medisecure.rdv.models import RendezVous, StatutRDV
 from django.utils import timezone
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 
 class PatientDashboardView(LoginRequiredMixin, TemplateView):
@@ -86,6 +87,20 @@ class DoctorDashboardView(LoginRequiredMixin, TemplateView):
                 statut=StatutRDV.CONFIRME
             ).count()
 
+        return context
+
+
+class NurseDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = "portal/nurse/dashboard.html"
+
+    def test_func(self):
+        return self.request.user.role == Roles.INFIRMIER
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Statistiques factices pour le moment, comme sur le mobile
+        context["soins_a_faire"] = 12
+        context["urgences"] = 2
         return context
 
 
@@ -206,3 +221,16 @@ class DoctorMessagesView(LoginRequiredMixin, TemplateView):
 
 class DoctorNotificationsView(LoginRequiredMixin, TemplateView):
     template_name = "portal/doctor/notifications.html"
+
+
+class NursePatientListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    template_name = "portal/nurse/patient_list.html"
+    context_object_name = "patients"
+
+    def test_func(self):
+        return self.request.user.role == Roles.INFIRMIER
+
+    def get_queryset(self):
+        # Pour une infirmière, on peut afficher tous les patients ou ceux vus récemment
+        # Pour l'instant on affiche tous les patients avec dossier
+        return Patient.objects.all().select_related("user")

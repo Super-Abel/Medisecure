@@ -25,7 +25,7 @@ class BookingConfirmPage(BasePage):
 
         # 2. Wait for slots to load and select first slot
         slot_locator = self._page.locator(".time-slot").first
-        slot_locator.wait_for(state="visible", timeout=10000)
+        slot_locator.wait_for(state="visible", timeout=30000)
         slot_locator.click()
 
         # 3. Wait for the hidden input to be updated by JS

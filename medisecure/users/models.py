@@ -13,6 +13,7 @@ from django.utils import timezone
 class Roles(models.TextChoices):
     PATIENT = "PATIENT", _("Patient")
     MEDECIN = "MEDECIN", _("Médecin")
+    INFIRMIER = "INFIRMIER", _("Infirmier")
     ADMIN = "ADMIN", _("Administrateur")
 
 

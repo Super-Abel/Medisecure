@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Portail Infirmier - MediSecure{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+  <div class="col-12">
+    <h1 class="display-5 fw-bold mb-1">Bonjour, {{ request.user.prenom }} {{ request.user.nom }}</h1>
+    <p class="text-muted">Tableau de bord infirmier - Aperçu de votre activité</p>
+  </div>
+</div>
+
+<style>
+  .stat-card { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #e5e9ef; text-align: center; height: 100%; transition: 0.15s; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: #1a56db; }
+  .stat-icon { font-size: 32px; margin-bottom: 12px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #1e293b; line-height: 1.2; }
+  .stat-label { font-size: 13px; color: #64748b; font-weight: 600; margin-top: 4px; }
+  .quick-btn { background: #fff; border: 1px solid #e5e9ef; border-radius: 14px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: 0.15s; text-decoration: none; height: 100%; }
+  .quick-btn:hover { background: #f8fafc; transform: scale(0.98); border-color: #cbd5e1; }
+  .quick-btn .q-icon { font-size: 32px; width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px;}
+  .quick-btn .q-label { font-size: 14px; font-weight: 600; color: #64748b; text-align: center; }
+</style>
+
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">🏥</div>
+      <div class="stat-value">{{ soins_a_faire }}</div>
+      <div class="stat-label">Soins à effectuer</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">🚨</div>
+      <div class="stat-value">{{ urgences }}</div>
+      <div class="stat-label">Urgences signalées</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value">94%</div>
+      <div class="stat-label">Taux de complétion</div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <h5 class="fw-bold mb-4">Actions rapides</h5>
+  </div>
+  <div class="col-6 col-md-3 mb-4">
+    <a href="#" class="quick-btn" data-bs-toggle="modal" data-bs-target="#registerPatientModal">
+      <div class="q-icon" style="background:#fef9c3">👤+</div>
+      <div class="q-label">Nouveau Patient</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-4">
+    <a href="{% url 'portal:nurse-patients' %}" class="quick-btn">
+      <div class="q-icon" style="background:#dcfce7">👥</div>
+      <div class="q-label">Patients</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-4">
+    <a href="#" class="quick-btn">
+      <div class="q-icon" style="background:#dbeafe">📅</div>
+      <div class="q-label">Planning soins</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3 mb-4">
+    <a href="#" class="quick-btn">
+      <div class="q-icon" style="background:#fee2e2">⚠️</div>
+      <div class="q-label">Alertes</div>
+    </a>
+  </div>
+</div>
+
+<!-- Modal Inscription Patient -->
+<div class="modal fade" id="registerPatientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Enregistrer un Patient</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="registerPatientForm" class="p-4">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Prénom</label>
+          <input type="text" name="prenom" class="form-control" required style="border-radius: 10px;">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Nom</label>
+          <input type="text" name="nom" class="form-control" required style="border-radius: 10px;">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Email</label>
+          <input type="email" name="email" class="form-control" required style="border-radius: 10px;">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Mot de passe temporaire</label>
+          <input type="password" name="password" class="form-control" required style="border-radius: 10px;">
+        </div>
+        <button type="submit" class="btn btn-premium-primary w-100 py-3 mt-2" style="border-radius: 12px;">Créer le compte</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('registerPatientForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData);
+  
+  try {
+    const res = await fetch('/api/auth/nurse-create-patient/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    if (res.ok) {
+      alert('Patient créé avec succès !');
+      window.location.reload();
+    } else {
+      const err = await res.json();
+      alert('Erreur: ' + JSON.stringify(err));
+    }
+  } catch (err) {
+    alert('Erreur de connexion au serveur');
+  }
+});
+</script>
+
+<div class="row">
+  <div class="col-12">
+    <div class="ms-card p-4">
+      <h5 class="fw-bold mb-3">Activité récente</h5>
+      <p class="text-muted small">Aucune activité récente pour le moment.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

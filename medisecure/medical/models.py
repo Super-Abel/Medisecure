@@ -40,7 +40,9 @@ class DossierMedical(models.Model):
 
 
 class Prescription(models.Model):
-    dossier = models.ForeignKey(DossierMedical, on_delete=models.CASCADE, related_name="prescriptions")
+    dossier = models.ForeignKey(
+        DossierMedical, on_delete=models.CASCADE, related_name="prescriptions"
+    )
     medecin = models.ForeignKey("users.Medecin", on_delete=models.SET_NULL, null=True)
     medicament = models.CharField(max_length=200)
     dosage = models.CharField(max_length=100, blank=True)
@@ -55,7 +57,9 @@ class Prescription(models.Model):
 
 
 class Consultation(models.Model):
-    dossier = models.ForeignKey(DossierMedical, on_delete=models.CASCADE, related_name="consultations")
+    dossier = models.ForeignKey(
+        DossierMedical, on_delete=models.CASCADE, related_name="consultations"
+    )
     medecin = models.ForeignKey("users.Medecin", on_delete=models.SET_NULL, null=True)
     date_consult = models.DateTimeField()
     diagnostic = models.TextField(blank=True)
@@ -67,7 +71,9 @@ class Consultation(models.Model):
 
 
 class ResultatAnalyse(models.Model):
-    dossier = models.ForeignKey(DossierMedical, on_delete=models.CASCADE, related_name="resultats_labo")
+    dossier = models.ForeignKey(
+        DossierMedical, on_delete=models.CASCADE, related_name="resultats_labo"
+    )
     examen = models.CharField(max_length=200)
     valeur = models.CharField(max_length=100, blank=True)
     unite = models.CharField(max_length=50, blank=True)
@@ -78,3 +84,35 @@ class ResultatAnalyse(models.Model):
 
     def __str__(self):
         return f"Résultat {self.examen} pour {self.dossier.patient.user.email}"
+
+
+class SignesVitaux(models.Model):
+    dossier = models.ForeignKey(
+        DossierMedical, on_delete=models.CASCADE, related_name="signes_vitaux"
+    )
+    infirmier = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        limit_choices_to={"role": "INFIRMIER"},
+    )
+    poids = models.FloatField(_("Poids (kg)"), null=True, blank=True)
+    taille = models.IntegerField(_("Taille (cm)"), null=True, blank=True)
+    tension_systolique = models.IntegerField(
+        _("Tension Systolique"), null=True, blank=True
+    )
+    tension_diastolique = models.IntegerField(
+        _("Tension Diastolique"), null=True, blank=True
+    )
+    temperature = models.FloatField(_("Température (°C)"), null=True, blank=True)
+    frequence_cardiaque = models.IntegerField(
+        _("Fréquence Cardiaque (bpm)"), null=True, blank=True
+    )
+    saturation_oxygene = models.IntegerField(
+        _("Saturation O2 (%)"), null=True, blank=True
+    )
+    observations = models.TextField(_("Observations"), blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Signes vitaux du {self.created_at.strftime('%Y-%m-%d')} pour {self.dossier.patient.user.email}"

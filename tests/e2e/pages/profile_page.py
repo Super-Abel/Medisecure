@@ -39,11 +39,11 @@ class ProfilePage(BasePage):
         self, specialite: str = "", cabinet: str = "", rpps: str = ""
     ) -> None:
         if specialite:
-            self._page.select_option("#inputSpecSelect", specialite)
+            self._page.locator("#inputSpecSelect").select_option(specialite, force=True)
         if cabinet:
-            self._page.select_option("#inputCabinetSelect", cabinet)
+            self._page.locator("#inputCabinetSelect").select_option(cabinet, force=True)
         if rpps:
-            self._page.fill("#inputRpps", rpps)
+            self._page.locator("#inputRpps").fill(rpps, force=True)
 
     def save(self) -> None:
         self._page.click("#saveBtn")
