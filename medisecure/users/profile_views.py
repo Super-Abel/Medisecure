@@ -25,7 +25,8 @@ class NotificationListView(APIView):
                     "id": n.id,
                     "message": n.message,
                     "type": n.type,
-                    "statut": n.statut,
+                    "statut": "sent" if n.statut == "ENVOYE" else "read",
+                    "statut_web": n.statut,
                     "date_envoi": n.date_envoi,
                 }
                 for n in notifs
@@ -52,6 +53,9 @@ class NotificationMarkReadView(APIView):
                 {"detail": "Introuvable."}, status=status.HTTP_404_NOT_FOUND
             )
 
+    def put(self, request, notif_id: int):
+        return self.patch(request, notif_id)
+
 
 class NotificationReadAllView(APIView):
     permission_classes = [IsAuthenticated]
@@ -68,6 +72,9 @@ class NotificationReadAllView(APIView):
         return Response(
             {"message": f"{notifs_updated} notifications marquées comme lues"}
         )
+
+    def put(self, request):
+        return self.patch(request)
 
 
 class NotificationUnreadCountView(APIView):
@@ -151,11 +158,25 @@ class MedecinListView(APIView):
             [
                 {
                     "id": m.id,
+                    "user_id": m.user.id,
+                    "user": {
+                        "nom": m.user.nom,
+                        "prenom": m.user.prenom,
+                        "email": m.user.email,
+                    },
                     "email": m.user.email,
                     "nom": m.user.nom,
                     "prenom": m.user.prenom,
                     "numero_licence": m.numero_licence,
                     "specialite": m.specialite.nom_specialite if m.specialite else None,
+                    "specialty": (
+                        {
+                            "id": m.specialite.id,
+                            "nom": m.specialite.nom_specialite,
+                        }
+                        if m.specialite
+                        else None
+                    ),
                     "cabinet": m.cabinet.nom if m.cabinet else None,
                 }
                 for m in medecins

@@ -291,5 +291,6 @@ pytest_ascii.txt
 pytest_output.txt
 test_output.txt
 test_*.py
+!tests/**/*.py
 count.py
 
