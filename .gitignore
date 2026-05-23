@@ -294,3 +294,9 @@ test_*.py
 !tests/**/*.py
 count.py
 
+# Local databases, project reports, and test runs
+test_db.sqlite3
+test-artifacts/
+*.ini
+
+

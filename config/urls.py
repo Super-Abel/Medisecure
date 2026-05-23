@@ -16,6 +16,16 @@ urlpatterns = [
         TemplateView.as_view(template_name="pages/about.html"),
         name="about",
     ),
+    path(
+        "terms/",
+        TemplateView.as_view(template_name="pages/terms.html"),
+        name="terms",
+    ),
+    path(
+        "privacy/",
+        TemplateView.as_view(template_name="pages/privacy.html"),
+        name="privacy",
+    ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
@@ -26,6 +36,7 @@ urlpatterns = [
     # Portals (Patient/Doctor)
     path("portal/", include("medisecure.portal.urls", namespace="portal")),
     # Your stuff: custom urls includes go here
+    path("i18n/", include("django.conf.urls.i18n")),
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),

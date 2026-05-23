@@ -39,11 +39,26 @@
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
         {% endif %}
         
+        <div class="mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="acceptTerms" required>
+            <label class="form-check-label small text-muted" for="acceptTerms">
+              {% trans "J'accepte les" %} <a href="{% url 'terms' %}" target="_blank" class="text-primary fw-bold text-decoration-none">{% trans "conditions d'utilisation" %}</a> {% trans "et la" %} <a href="{% url 'privacy' %}" target="_blank" class="text-primary fw-bold text-decoration-none">{% trans "politique de confidentialité" %}</a>.
+            </label>
+          </div>
+        </div>
+
         <div class="d-grid gap-2 mt-4">
-          <button class="ms-btn ms-btn-primary py-3 fw-bold" type="submit">
+          <button class="ms-btn ms-btn-primary py-3 fw-bold" type="submit" id="submitBtn" disabled>
             <i class="bi bi-person-check-fill me-2"></i> {% trans "Créer mon compte" %}
           </button>
         </div>
+
+        <script>
+          document.getElementById('acceptTerms').addEventListener('change', function() {
+            document.getElementById('submitBtn').disabled = !this.checked;
+          });
+        </script>
       </form>
 
       <div class="mt-4 text-center">

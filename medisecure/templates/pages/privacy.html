@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Politique de confidentialité" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="ms-card p-4 p-md-5 shadow-sm border-0" style="border-radius: 24px;">
+                <h1 class="fw-bold mb-4">{% trans "Politique de confidentialité" %}</h1>
+                <p class="text-muted small">{% trans "Dernière mise à jour : 16 Avril 2026" %}</p>
+                <hr class="my-4 opacity-10">
+                
+                <div class="legal-content">
+                    <h3 class="h5 fw-bold">1. Données collectées</h3>
+                    <p>Nous collectons des données relatives à votre identité et à votre santé pour assurer le service MediSecure.</p>
+                    
+                    <h3 class="h5 fw-bold mt-4">2. Utilisation des données</h3>
+                    <p>Vos données sont exclusivement utilisées pour la gestion de vos soins et ne sont jamais revendues.</p>
+                    
+                    <h3 class="h5 fw-bold mt-4">3. Sécurité</h3>
+                    <p>Nous utilisons des protocoles de chiffrement avancés (AES-256) pour protéger vos informations.</p>
+                    
+                    <p class="mt-5"><em>Ceci est un document de démonstration pour le cycle E2E.</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -47,7 +47,7 @@
                 <a
                   class="nav-link fw-bold text-primary"
                   href="{% url 'users:redirect' %}"
-                  >Espace Personnel</a
+                  >{% trans "Espace Personnel" %}</a
                 >
               </li>
               <li class="nav-item">
@@ -60,19 +60,42 @@
             <div class="d-flex align-items-center gap-3">
               {% if not request.user.is_authenticated %}
               <a class="nav-link px-2" href="{% url 'account_login' %}"
-                >Se connecter</a
+                >{% trans "Se connecter" %}</a
               >
               <a
                 class="btn btn-premium btn-premium-primary py-2 px-4 shadow-sm"
                 href="{% url 'account_signup' %}"
               >
-                S'inscrire
+                {% trans "S'inscrire" %}
               </a>
               {% endif %}
+              <div class="dropdown me-1">
+                <button class="btn btn-link nav-link dropdown-toggle p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-globe2 me-1"></i> {{ LANGUAGE_CODE|upper }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px;">
+                  {% get_current_language as LANGUAGE_CODE %}
+                  {% get_available_languages as LANGUAGES %}
+                  {% get_language_info_list for LANGUAGES as languages %}
+                  {% for language in languages %}
+                    <li>
+                      <form action="{% url 'set_language' %}" method="post">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                        <input name="language" type="hidden" value="{{ language.code }}">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 {% if language.code == LANGUAGE_CODE %}active{% endif %}" style="border-radius: 8px;">
+                          <span>{% if language.code == 'fr' %}🇫🇷{% elif language.code == 'en' %}🇺🇸{% else %}🌐{% endif %}</span>
+                          {{ language.name_local }}
+                        </button>
+                      </form>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
               <button
                 class="btn btn-link nav-link p-2"
                 onclick="window.toggleTheme()"
-                title="Basculer le thème"
+                title="{% trans 'Basculer le thème' %}"
               >
                 <i class="bi bi-sun-fill theme-icon-light fs-5"></i>
                 <i class="bi bi-moon-stars-fill theme-icon-dark fs-5"></i>
