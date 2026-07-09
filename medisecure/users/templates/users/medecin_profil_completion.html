@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block title %}Compléter mon profil médecin — MediSecure{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center py-5"
+     style="background: linear-gradient(135deg, #eef4ff 0%, #f5f0ff 100%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-9">
+
+        <!-- Progress indicator -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div class="step-dot done">
+            <i class="bi bi-check-lg"></i>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-dot active">2</div>
+          <div class="step-line faded"></div>
+          <div class="step-dot faded">3</div>
+          <span class="ms-2 text-muted small fw-semibold">Étape 2 sur 3 — Profil professionnel</span>
+        </div>
+
+        <div class="card border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #0984e3, #6c5ce7); padding: 2.5rem 2.5rem 2rem;">
+            <div class="d-flex align-items-center gap-3">
+              <div style="width:56px; height:56px; border-radius:16px; background:rgba(255,255,255,.15);
+                          display:flex; align-items:center; justify-content:center; font-size:1.6rem;">
+                🩺
+              </div>
+              <div>
+                <h4 class="text-white fw-bold mb-0">Informations professionnelles</h4>
+                <p class="mb-0" style="color:rgba(255,255,255,.75); font-size:.9rem;">
+                  Bonjour Dr {{ request.user.prenom }} {{ request.user.nom }},
+                  complétez votre profil pour accéder à votre espace.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="card-body p-4 p-md-5">
+
+            <form method="post" novalidate>
+              {% csrf_token %}
+
+              <!-- Numéro de licence -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_numero_licence">
+                  <i class="bi bi-card-text me-1 text-primary"></i>
+                  Numéro de licence médicale <span class="text-danger">*</span>
+                </label>
+                <input type="text"
+                       name="numero_licence"
+                       id="id_numero_licence"
+                       class="form-control form-control-lg {% if form.numero_licence.errors %}is-invalid{% endif %}"
+                       placeholder="Ex : MED-CM-001234"
+                       value="{{ form.numero_licence.value|default:'' }}"
+                       required>
+                {% if form.numero_licence.errors %}
+                  <div class="invalid-feedback">{{ form.numero_licence.errors|join:", " }}</div>
+                {% endif %}
+                <div class="form-text">Votre numéro d'ordre figurant sur votre diplôme ou carte professionnelle.</div>
+              </div>
+
+              <!-- Spécialité -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_specialite">
+                  <i class="bi bi-heart-pulse me-1 text-primary"></i>
+                  Spécialité <span class="text-danger">*</span>
+                </label>
+                <select name="specialite"
+                        id="id_specialite"
+                        class="form-select form-select-lg {% if form.specialite.errors %}is-invalid{% endif %}"
+                        required>
+                  <option value="">-- Sélectionner une spécialité --</option>
+                  {% for spec in form.specialite.field.queryset %}
+                    <option value="{{ spec.pk }}"
+                      {% if form.specialite.value|stringformat:"s" == spec.pk|stringformat:"s" %}selected{% endif %}>
+                      {{ spec.nom_specialite }}
+                    </option>
+                  {% endfor %}
+                </select>
+                {% if form.specialite.errors %}
+                  <div class="invalid-feedback">{{ form.specialite.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Cabinet -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_cabinet">
+                  <i class="bi bi-building me-1 text-primary"></i>
+                  Cabinet / Établissement
+                  <span class="badge bg-light text-muted fw-normal ms-1" style="font-size:.72rem;">Optionnel</span>
+                </label>
+                <select name="cabinet" id="id_cabinet"
+                        class="form-select form-select-lg {% if form.cabinet.errors %}is-invalid{% endif %}">
+                  <option value="">-- Sélectionner un établissement (optionnel) --</option>
+                  {% for cab in form.cabinet.field.queryset %}
+                    <option value="{{ cab.pk }}"
+                      {% if form.cabinet.value|stringformat:"s" == cab.pk|stringformat:"s" %}selected{% endif %}>
+                      {{ cab.nom }} — {{ cab.adresse|truncatechars:40 }}
+                    </option>
+                  {% endfor %}
+                </select>
+                {% if form.cabinet.errors %}
+                  <div class="invalid-feedback">{{ form.cabinet.errors|join:", " }}</div>
+                {% endif %}
+                <div class="form-text">Votre établissement principal. Vous pourrez le modifier depuis votre profil.</div>
+              </div>
+
+              <!-- Téléphone -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_telephone">
+                  <i class="bi bi-telephone me-1 text-primary"></i>
+                  Téléphone professionnel
+                  <span class="badge bg-light text-muted fw-normal ms-1" style="font-size:.72rem;">Optionnel</span>
+                </label>
+                <input type="tel"
+                       name="telephone"
+                       id="id_telephone"
+                       class="form-control form-control-lg"
+                       placeholder="Ex : +237 6XX XXX XXX"
+                       value="{{ form.telephone.value|default:'' }}">
+                <div class="form-text">Visible uniquement par vos patients lors de la prise de rendez-vous.</div>
+              </div>
+
+              <!-- Info sécurité -->
+              <div class="alert alert-info border-0 d-flex gap-3 align-items-start mb-4"
+                   style="background: rgba(9,132,227,.08); border-radius: 14px;">
+                <i class="bi bi-shield-lock-fill text-primary mt-1"></i>
+                <div style="font-size: .88rem;">
+                  Vos informations professionnelles sont vérifiées par notre équipe sous 24h.
+                  Votre accès complet sera activé après validation de votre licence.
+                </div>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold py-3"
+                        style="border-radius: 14px; background: linear-gradient(135deg,#0984e3,#6c5ce7); border:none;">
+                  <i class="bi bi-check-circle-fill me-2"></i> Accéder à mon espace médecin
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+
+        <!-- Footer note -->
+        <p class="text-center text-muted small mt-4">
+          <i class="bi bi-lock-fill me-1"></i>
+          Données chiffrées · Hébergées en France · Conformité HDS
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .step-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem; flex-shrink: 0;
+  }
+  .step-dot.done    { background: #00b894; color: #fff; }
+  .step-dot.active  { background: #0984e3; color: #fff; }
+  .step-dot.faded   { background: #e2e8f0; color: #94a3b8; }
+  .step-line        { flex: 1; height: 2px; background: #0984e3; max-width: 60px; }
+  .step-line.faded  { background: #e2e8f0; }
+</style>
+{% endblock %}

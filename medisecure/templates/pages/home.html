@@ -1,131 +1,875 @@
-{% extends "base.html" %} {% load static %} {% block title %}Acceuil —
-MediSecure{% endblock %} {% block content %}
-<!-- Hero Section -->
+{% extends "base.html" %}
+{% load static %}
+{% block title %}MediSecure — La Médecine de Demain{% endblock %}
+
+{% block css %}
+  {{ block.super }}
+  <style>
+    /* ── Global page background ─────────────────────────── */
+    body {
+      background: #f0f4ff !important;
+    }
+    [data-theme="dark"] body {
+      background: #080d1a !important;
+    }
+
+    /* Shared blob helper */
+    .blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+
+    /* ── Hero ───────────────────────────────────────────── */
+    .hero-section {
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0a1628 0%, #1a2f5e 50%, #0d3b6e 100%);
+    }
+    .hero-bg-pattern {
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle at 20% 50%, rgba(9,132,227,.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(108,92,231,.12) 0%, transparent 40%),
+                        radial-gradient(circle at 60% 80%, rgba(0,184,148,.1) 0%, transparent 40%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0; opacity: .04;
+      background-image: linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(9,132,227,.2); border: 1px solid rgba(9,132,227,.4);
+      color: #58a6ff; border-radius: 50px; padding: .35rem 1rem;
+      font-size: .82rem; font-weight: 600; letter-spacing: .5px;
+      margin-bottom: 1.5rem;
+    }
+    .hero-section h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900; line-height: 1.08;
+      color: #fff; margin-bottom: 1.5rem;
+    }
+    .hero-section h1 .highlight {
+      background: linear-gradient(90deg, #0984e3, #6c5ce7, #00b894);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-section .lead {
+      font-size: 1.15rem; color: rgba(255,255,255,.75);
+      max-width: 540px; line-height: 1.7; margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-hero-primary {
+      padding: .9rem 2.2rem; border-radius: 50px; font-weight: 700;
+      background: linear-gradient(135deg, #0984e3, #6c5ce7);
+      color: #fff; border: none; text-decoration: none;
+      display: inline-flex; align-items: center; gap: .6rem;
+      box-shadow: 0 8px 30px rgba(9,132,227,.4);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(9,132,227,.5); color: #fff; }
+    .btn-hero-outline {
+      padding: .9rem 2.2rem; border-radius: 50px; font-weight: 600;
+      background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.3);
+      color: #fff; text-decoration: none;
+      display: inline-flex; align-items: center; gap: .6rem;
+      backdrop-filter: blur(8px); transition: all .25s;
+    }
+    .btn-hero-outline:hover { background: rgba(255,255,255,.18); color: #fff; transform: translateY(-2px); }
+    .hero-trust {
+      display: flex; align-items: center; gap: 1rem;
+      margin-top: 2rem; flex-wrap: wrap;
+    }
+    .hero-trust .avatar-stack { display: flex; }
+    .hero-trust .avatar-stack img,
+    .hero-trust .avatar-stack .av {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid #1a2f5e; margin-left: -10px;
+      background: linear-gradient(135deg,#0984e3,#6c5ce7);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .7rem; font-weight: 700;
+    }
+    .hero-trust .avatar-stack .av:first-child { margin-left: 0; }
+    .hero-trust p { color: rgba(255,255,255,.65); font-size: .85rem; margin: 0; }
+    .hero-trust p strong { color: #fff; }
+
+    /* hero visual card */
+    .hero-card {
+      background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.12); border-radius: 24px;
+      padding: 1.5rem; color: #fff;
+    }
+    .hero-card .appt-item {
+      display: flex; align-items: center; gap: 1rem;
+      padding: .85rem 1rem; border-radius: 14px;
+      background: rgba(255,255,255,.06); margin-bottom: .75rem;
+      transition: background .2s;
+    }
+    .hero-card .appt-item:hover { background: rgba(255,255,255,.1); }
+    .hero-card .appt-avatar {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .hero-card .appt-meta { flex: 1; }
+    .hero-card .appt-meta strong { display: block; font-size: .9rem; }
+    .hero-card .appt-meta span { font-size: .78rem; color: rgba(255,255,255,.55); }
+    .hero-card .appt-badge {
+      font-size: .7rem; font-weight: 700; padding: .25rem .7rem;
+      border-radius: 50px;
+    }
+    .badge-green { background: rgba(0,184,148,.2); color: #00b894; }
+    .badge-blue  { background: rgba(9,132,227,.2);  color: #74b9ff; }
+    .badge-orange{ background: rgba(253,203,110,.2); color: #fdcb6e; }
+    .hero-mini-stats {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; margin-top: 1rem;
+    }
+    .hero-mini-stat {
+      background: rgba(255,255,255,.05); border-radius: 14px; padding: 1rem .75rem; text-align: center;
+    }
+    .hero-mini-stat .val { font-size: 1.4rem; font-weight: 800; }
+    .hero-mini-stat .lbl { font-size: .7rem; color: rgba(255,255,255,.5); margin-top: .2rem; }
+
+    /* ── Logos trust bar ────────────────────────────────── */
+    .trust-bar {
+      background: #f8fafc; border-top: 1px solid #e8edf3; border-bottom: 1px solid #e8edf3;
+      padding: 1.8rem 0;
+    }
+    [data-theme="dark"] .trust-bar { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.07); }
+    .trust-bar .label { font-size: .78rem; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+    .trust-logos { display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; }
+    .trust-logo {
+      font-weight: 800; font-size: 1rem; color: var(--text-muted); opacity: .55;
+      display: flex; align-items: center; gap: .4rem; white-space: nowrap;
+      transition: opacity .2s;
+    }
+    .trust-logo:hover { opacity: .9; }
+    .trust-logo i { font-size: 1.2rem; }
+
+    /* ── How it works ───────────────────────────────────── */
+    .section-how {
+      position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #eef4ff 0%, #f5f0ff 50%, #eefaf6 100%);
+    }
+    [data-theme="dark"] .section-how {
+      background: linear-gradient(160deg, #0d1630 0%, #130d2a 50%, #0d1f1a 100%);
+    }
+    .section-how .blob-1 { width:500px;height:500px;background:rgba(9,132,227,.12);top:-100px;left:-100px; }
+    .section-how .blob-2 { width:400px;height:400px;background:rgba(108,92,231,.1);bottom:-80px;right:-80px; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(9,132,227,.1); border: 1px solid rgba(9,132,227,.2);
+      color: #0984e3; border-radius: 50px; padding: .3rem 1rem;
+      font-size: .78rem; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    [data-theme="dark"] .section-label { background: rgba(88,166,255,.1); border-color: rgba(88,166,255,.2); color: #58a6ff; }
+    .section-title { font-size: clamp(1.7rem, 3.5vw, 2.6rem); font-weight: 900; margin-bottom: 1rem; }
+    .section-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 520px; line-height: 1.7; }
+
+    .step-card {
+      position: relative; padding: 2rem; border-radius: 20px;
+      background: var(--panel-bg); border: 1px solid var(--border-color);
+      height: 100%; transition: transform .3s, box-shadow .3s;
+    }
+    .step-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(0,0,0,.08); }
+    .step-number {
+      width: 52px; height: 52px; border-radius: 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 900; color: #fff; margin-bottom: 1.5rem;
+    }
+    .step-connector {
+      position: absolute; top: 52px; right: -20px;
+      width: 40px; height: 2px; background: linear-gradient(90deg, var(--accent-blue), transparent);
+      z-index: 1;
+    }
+    @media(max-width:768px){ .step-connector { display: none; } }
+
+    /* ── Specialties ────────────────────────────────────── */
+    .section-specialties {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, #fff 0%, #f8f4ff 60%, #f0f9ff 100%);
+    }
+    [data-theme="dark"] .section-specialties {
+      background: linear-gradient(135deg, #0d1117 0%, #110d22 60%, #0d1622 100%);
+    }
+    /* dot grid pattern */
+    .section-specialties::before {
+      content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+      background-image: radial-gradient(circle, rgba(9,132,227,.12) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+    .specialty-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+    .specialty-card {
+      padding: 1.5rem 1rem; border-radius: 18px; text-align: center;
+      background: var(--panel-bg); border: 1.5px solid var(--border-color);
+      text-decoration: none; color: inherit;
+      transition: all .25s; cursor: pointer;
+    }
+    .specialty-card:hover {
+      border-color: var(--accent-blue); transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(9,132,227,.12); color: inherit;
+    }
+    .specialty-card .icon {
+      width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .specialty-card h6 { font-weight: 700; font-size: .88rem; margin: 0; }
+    .specialty-card small { color: var(--text-muted); font-size: .75rem; }
+
+    /* ── Features ───────────────────────────────────────── */
+    .section-features {
+      position: relative; overflow: hidden;
+      background: linear-gradient(180deg, #f0f4ff 0%, #fff 40%, #f5f0ff 100%);
+    }
+    [data-theme="dark"] .section-features {
+      background: linear-gradient(180deg, #080d1a 0%, #0d1117 40%, #100d22 100%);
+    }
+    .section-features .blob-3 { width:600px;height:600px;background:rgba(108,92,231,.07);top:10%;right:-200px; }
+    .section-features .blob-4 { width:500px;height:500px;background:rgba(0,184,148,.06);bottom:10%;left:-150px; }
+    .feature-pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--panel-bg); border: 1px solid var(--border-color);
+      border-radius: 50px; padding: .4rem 1rem; font-size: .8rem;
+      font-weight: 600; margin: .25rem; color: var(--text-muted);
+    }
+    .feature-pill i { color: #00b894; }
+    .feature-img-block {
+      position: relative; border-radius: 24px; overflow: hidden;
+      background: linear-gradient(135deg, #0a1628, #1a2f5e);
+      padding: 2rem; min-height: 380px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .feature-floating {
+      position: absolute; background: var(--panel-bg);
+      border: 1px solid var(--border-color); border-radius: 16px;
+      padding: .75rem 1.2rem; display: flex; align-items: center; gap: .75rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12); font-size: .85rem; font-weight: 600;
+    }
+    .feature-floating.top-left  { top: 1.5rem; left: 1.5rem; }
+    .feature-floating.bottom-right { bottom: 1.5rem; right: 1.5rem; }
+    .feature-floating i { font-size: 1.2rem; }
+
+    /* ── Stats ──────────────────────────────────────────── */
+    .stats-section {
+      background: linear-gradient(135deg, #0a1628 0%, #1a2f5e 100%);
+      padding: 5rem 0; position: relative; overflow: hidden;
+    }
+    .stats-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(9,132,227,.15) 0%, transparent 60%);
+    }
+    .stat-counter { color: #fff; text-align: center; }
+    .stat-counter .number {
+      font-size: 3.5rem; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, #74b9ff, #a29bfe);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-counter .label { color: rgba(255,255,255,.65); font-size: .9rem; margin-top: .5rem; }
+    .stat-divider { width: 1px; background: rgba(255,255,255,.1); align-self: stretch; }
+
+    /* ── Testimonials ───────────────────────────────────── */
+    .section-testimonials {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, #eef4ff 0%, #f0f9ff 50%, #eefaf6 100%);
+    }
+    [data-theme="dark"] .section-testimonials {
+      background: linear-gradient(135deg, #0d1630 0%, #0d1622 50%, #0d1f1a 100%);
+    }
+    .section-testimonials .blob-5 { width:450px;height:450px;background:rgba(9,132,227,.1);top:-50px;left:-100px; }
+    .section-testimonials .blob-6 { width:350px;height:350px;background:rgba(0,184,148,.09);bottom:-50px;right:-80px; }
+    .testimonial-card {
+      background: var(--panel-bg); border: 1px solid var(--border-color);
+      border-radius: 20px; padding: 2rem; height: 100%;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .testimonial-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,.08); }
+    .testimonial-card .stars { color: #fdcb6e; font-size: 1rem; margin-bottom: 1rem; }
+    .testimonial-card blockquote { font-size: .95rem; line-height: 1.7; color: var(--text-muted); margin: 0 0 1.5rem; font-style: italic; }
+    .testimonial-card .author { display: flex; align-items: center; gap: .9rem; }
+    .testimonial-card .author .avatar {
+      width: 46px; height: 46px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; color: #fff; flex-shrink: 0;
+    }
+    .testimonial-card .author strong { display: block; font-size: .9rem; }
+    .testimonial-card .author span { font-size: .78rem; color: var(--text-muted); }
+
+    /* ── Mobile App ─────────────────────────────────────── */
+    .app-section {
+      background: linear-gradient(135deg, #f0f7ff, #f5f0ff);
+      border-radius: 32px; padding: 4rem; margin: 0 1rem;
+    }
+    [data-theme="dark"] .app-section { background: linear-gradient(135deg, rgba(9,132,227,.08), rgba(108,92,231,.08)); }
+    .store-btn {
+      display: inline-flex; align-items: center; gap: .75rem;
+      background: #0a1628; color: #fff; border-radius: 14px;
+      padding: .9rem 1.5rem; text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .store-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,.2); color: #fff; }
+    .store-btn .store-text small { display: block; font-size: .65rem; opacity: .7; letter-spacing: .5px; text-transform: uppercase; }
+    .store-btn .store-text strong { font-size: .95rem; }
+
+    /* ── CTA ────────────────────────────────────────────── */
+    .cta-section {
+      background: linear-gradient(135deg, #0984e3 0%, #6c5ce7 60%, #00b894 100%);
+      border-radius: 28px; padding: 5rem 3rem; text-align: center;
+      position: relative; overflow: hidden; margin: 0 1rem;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .cta-section h2 { font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 1rem; position: relative; }
+    .cta-section p { color: rgba(255,255,255,.8); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2.5rem; position: relative; }
+    .btn-cta-white {
+      background: #fff; color: #0984e3; border-radius: 50px;
+      padding: 1rem 2.5rem; font-weight: 800; font-size: 1.05rem;
+      text-decoration: none; display: inline-flex; align-items: center; gap: .6rem;
+      position: relative; box-shadow: 0 8px 30px rgba(0,0,0,.15);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .btn-cta-white:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,.2); color: #6c5ce7; }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    .site-footer {
+      background: #0a1628; color: rgba(255,255,255,.65); padding: 5rem 0 2rem; margin-top: 6rem;
+    }
+    .site-footer .footer-brand {
+      font-size: 1.5rem; font-weight: 900; color: #fff;
+      display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem;
+    }
+    .site-footer .footer-brand i { color: #0984e3; }
+    .site-footer p { font-size: .88rem; line-height: 1.8; max-width: 300px; }
+    .site-footer h6 { color: #fff; font-weight: 700; margin-bottom: 1.2rem; font-size: .85rem; letter-spacing: .5px; text-transform: uppercase; }
+    .footer-links-list { list-style: none; padding: 0; }
+    .footer-links-list li { margin-bottom: .7rem; }
+    .footer-links-list a { color: rgba(255,255,255,.55); text-decoration: none; font-size: .88rem; transition: color .2s; }
+    .footer-links-list a:hover { color: #74b9ff; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,.08); margin-top: 3rem; padding-top: 1.5rem; font-size: .8rem; }
+    .footer-social { display: flex; gap: .75rem; }
+    .footer-social a {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,.07); color: rgba(255,255,255,.6);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; transition: all .2s;
+    }
+    .footer-social a:hover { background: #0984e3; color: #fff; transform: translateY(-2px); }
+    .certif-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      border: 1px solid rgba(255,255,255,.12); border-radius: 8px;
+      padding: .3rem .8rem; font-size: .72rem; color: rgba(255,255,255,.5); margin: .2rem;
+    }
+    .certif-badge i { color: #00b894; }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ════════════ HERO ════════════ -->
 <section class="hero-section">
-  <div class="container">
-    <div class="hero-content animate-up">
-      <h1>La Médecine de Demain, <br />Disponible Aujourd'hui.</h1>
-      <p class="lead">
-        Simplifiez votre parcours de santé avec MediSecure. Prenez rendez-vous
-        en quelques clics avec les meilleurs spécialistes de votre région.
-      </p>
-      <div class="d-flex gap-3 mt-4">
-        <a
-          href="{% url 'account_signup' %}"
-          class="btn-premium btn-premium-primary"
-        >
-          <i class="bi bi-person-plus"></i> Créer mon compte
-        </a>
-        <a
-          href="{% url 'account_login' %}"
-          class="btn-premium btn-premium-outline"
-        >
-          <i class="bi bi-box-arrow-in-right"></i> Se connecter
-        </a>
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-grid"></div>
+  <div class="container py-5" style="position:relative;z-index:2;">
+    <div class="row align-items-center g-5 py-4">
+
+      <!-- Left: text -->
+      <div class="col-lg-6">
+        <div class="hero-badge">
+          <i class="bi bi-patch-check-fill"></i> Plateforme Certifiée HDS
+        </div>
+        <h1>
+          La Médecine de<br>
+          <span class="highlight">Demain,</span><br>
+          Disponible Aujourd'hui.
+        </h1>
+        <p class="lead">
+          Prenez rendez-vous avec les meilleurs spécialistes, gérez vos ordonnances
+          et consultez en télémédecine — le tout depuis une seule application sécurisée.
+        </p>
+        <div class="hero-actions">
+          <a href="{% url 'account_signup' %}" class="btn-hero-primary">
+            <i class="bi bi-person-plus-fill"></i> Créer mon compte gratuit
+          </a>
+          <a href="{% url 'account_login' %}" class="btn-hero-outline">
+            <i class="bi bi-play-circle"></i> Voir la démo
+          </a>
+        </div>
+        <div class="hero-trust mt-4">
+          <div class="avatar-stack">
+            <div class="av">AB</div>
+            <div class="av">MC</div>
+            <div class="av">YD</div>
+            <div class="av">FL</div>
+          </div>
+          <p><strong>+10 000 patients</strong> nous font déjà confiance</p>
+        </div>
+      </div>
+
+      <!-- Right: dashboard card -->
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="hero-card">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span style="font-weight:700;font-size:.9rem;">Prochains Rendez-vous</span>
+            <span class="hero-badge" style="margin:0;font-size:.72rem;">Aujourd'hui</span>
+          </div>
+
+          <div class="appt-item">
+            <div class="appt-avatar" style="background:rgba(9,132,227,.2);">🫀</div>
+            <div class="appt-meta">
+              <strong>Dr. Amara Diallo — Cardiologie</strong>
+              <span><i class="bi bi-clock me-1"></i>09:30 · Téléconsultation</span>
+            </div>
+            <span class="appt-badge badge-green">Confirmé</span>
+          </div>
+
+          <div class="appt-item">
+            <div class="appt-avatar" style="background:rgba(108,92,231,.2);">🧠</div>
+            <div class="appt-meta">
+              <strong>Dr. Sophie Martin — Neurologie</strong>
+              <span><i class="bi bi-geo-alt me-1"></i>14:00 · En cabinet</span>
+            </div>
+            <span class="appt-badge badge-blue">Dans 4h</span>
+          </div>
+
+          <div class="appt-item" style="margin-bottom:0">
+            <div class="appt-avatar" style="background:rgba(0,184,148,.2);">🦷</div>
+            <div class="appt-meta">
+              <strong>Dr. Karim Benali — Dentiste</strong>
+              <span><i class="bi bi-calendar3 me-1"></i>Demain, 10:00</span>
+            </div>
+            <span class="appt-badge badge-orange">À venir</span>
+          </div>
+
+          <div class="hero-mini-stats">
+            <div class="hero-mini-stat">
+              <div class="val" style="color:#74b9ff;">150+</div>
+              <div class="lbl">Médecins</div>
+            </div>
+            <div class="hero-mini-stat">
+              <div class="val" style="color:#a29bfe;">98%</div>
+              <div class="lbl">Satisfaction</div>
+            </div>
+            <div class="hero-mini-stat">
+              <div class="val" style="color:#55efc4;">24/7</div>
+              <div class="lbl">Disponible</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Stats Bar -->
-<section class="py-5" style="border-bottom: 1px solid var(--border-color)">
+<!-- ════════════ TRUST BAR ════════════ -->
+<div class="trust-bar">
   <div class="container">
-    <div class="row">
-      <div class="col-md-4 stat-box animate-up delay-1">
-        <span class="number">150+</span>
-        <span class="label">Médecins Experts</span>
-      </div>
-      <div class="col-md-4 stat-box animate-up delay-1">
-        <span class="number">10k+</span>
-        <span class="label">Patients Satisfaits</span>
-      </div>
-      <div class="col-md-4 stat-box animate-up delay-1">
-        <span class="number">50k+</span>
-        <span class="label">Consultations Réalisées</span>
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      <span class="label">Certifié &amp; Approuvé par :</span>
+      <div class="trust-logos">
+        <span class="trust-logo"><i class="bi bi-shield-fill-check" style="color:#0984e3;"></i> Certification HDS</span>
+        <span class="trust-logo"><i class="bi bi-lock-fill" style="color:#6c5ce7;"></i> RGPD Conforme</span>
+        <span class="trust-logo"><i class="bi bi-patch-check-fill" style="color:#00b894;"></i> Ministère Santé</span>
+        <span class="trust-logo"><i class="bi bi-bank" style="color:#fdcb6e;opacity:1;"></i> Sécurité Sociale</span>
+        <span class="trust-logo"><i class="bi bi-award-fill" style="color:#d63031;opacity:1;"></i> ISO 27001</span>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- Features Section -->
-<section class="py-5 bg-light-subtle">
-  <div class="container">
-    <div class="text-center mb-5 animate-up">
-      <h2 class="fw-bold">Pourquoi choisir MediSecure ?</h2>
-      <p class="text-muted">
-        Une plateforme conçue pour votre bien-être et votre sécurité.
-      </p>
+<!-- ════════════ COMMENT ÇA MARCHE ════════════ -->
+<section class="section-how" style="padding: 6rem 0;">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="text-center mb-5">
+      <div class="section-label"><i class="bi bi-lightning-charge-fill"></i> Simple & Rapide</div>
+      <h2 class="section-title">En 3 étapes, votre santé<br>est entre de bonnes mains</h2>
+      <p class="section-subtitle mx-auto">Pas de file d'attente, pas de paperasse. MediSecure simplifie votre parcours de soins de A à Z.</p>
     </div>
 
     <div class="row g-4">
-      <div class="col-md-4 animate-up delay-2">
-        <div class="glass-card">
-          <div class="icon" style="background: var(--accent-blue)">
-            <i class="bi bi-shield-check"></i>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number" style="background:linear-gradient(135deg,#0984e3,#6c5ce7);">1</div>
+          <div class="step-connector"></div>
+          <h4 class="fw-bold mb-2">Créez votre compte</h4>
+          <p class="text-muted" style="font-size:.92rem;line-height:1.7;">Inscrivez-vous en 2 minutes. Vos données sont chiffrées et hébergées en France, conformément aux normes HDS.</p>
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Gratuit</span>
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Sans CB</span>
           </div>
-          <h4>Sécurité Maximale</h4>
-          <p class="text-muted">
-            Vos données médicales sont cryptées et stockées en toute sécurité,
-            conformément aux normes HDS.
-          </p>
         </div>
       </div>
-
-      <div class="col-md-4 animate-up delay-2">
-        <div class="glass-card">
-          <div class="icon" style="background: var(--accent-purple)">
-            <i class="bi bi-calendar-event"></i>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number" style="background:linear-gradient(135deg,#6c5ce7,#00b894);">2</div>
+          <div class="step-connector"></div>
+          <h4 class="fw-bold mb-2">Trouvez votre médecin</h4>
+          <p class="text-muted" style="font-size:.92rem;line-height:1.7;">Parcourez 150+ spécialistes vérifiés. Filtrez par disponibilité, localisation, langue ou note des patients.</p>
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> 40+ Spécialités</span>
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Avis certifiés</span>
           </div>
-          <h4>Gestion Intuitive</h4>
-          <p class="text-muted">
-            Gérez vos rendez-vous, vos ordonnances et vos rappels de santé
-            depuis une interface unique.
-          </p>
         </div>
       </div>
-
-      <div class="col-md-4 animate-up delay-2">
-        <div class="glass-card">
-          <div class="icon" style="background: var(--accent-green)">
-            <i class="bi bi-telephone-plus"></i>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number" style="background:linear-gradient(135deg,#00b894,#0984e3);">3</div>
+          <h4 class="fw-bold mb-2">Consultez sereinement</h4>
+          <p class="text-muted" style="font-size:.92rem;line-height:1.7;">En cabinet ou en téléconsultation vidéo sécurisée. Recevez vos ordonnances numériques directement dans votre espace.</p>
+          <div class="mt-3 d-flex gap-2 flex-wrap">
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Vidéo HD</span>
+            <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Ordonnance dématérialisée</span>
           </div>
-          <h4>Téléconsultation</h4>
-          <p class="text-muted">
-            Consultez votre médecin à distance via notre système de vidéo
-            sécurisé, où que vous soyez.
-          </p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CTA Final -->
-<section class="py-5 mb-5">
-  <div class="container">
-    <div
-      class="glass-card text-center p-5 animate-up delay-3"
-      style="
-        background: linear-gradient(
-          135deg,
-          var(--accent-blue),
-          var(--accent-purple)
-        );
-        color: white;
-      "
-    >
-      <h2 class="mb-3">Prêt à prendre soin de votre santé ?</h2>
-      <p class="mb-4 opacity-75">
-        Rejoignez des milliers de patients qui font confiance à MediSecure.
-      </p>
-      <a
-        href="{% url 'account_signup' %}"
-        class="btn btn-light btn-lg px-5 rounded-pill fw-bold"
-        style="color: var(--accent-blue)"
-      >
-        Commencer Maintenant
+<!-- ════════════ SPÉCIALITÉS ════════════ -->
+<section class="section-specialties" style="padding: 5rem 0;">
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="d-flex align-items-end justify-content-between mb-5 flex-wrap gap-3">
+      <div>
+        <div class="section-label"><i class="bi bi-grid-3x3-gap-fill"></i> Nos Spécialités</div>
+        <h2 class="section-title mb-0">40+ Domaines médicaux<br>couverts</h2>
+      </div>
+      <a href="{% url 'account_signup' %}" class="btn-hero-primary" style="white-space:nowrap;">
+        Voir tous les médecins <i class="bi bi-arrow-right"></i>
       </a>
     </div>
+
+    <div class="specialty-grid">
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(9,132,227,.1);color:#0984e3;">🫀</div>
+        <h6>Cardiologie</h6><small>28 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(108,92,231,.1);color:#6c5ce7;">🧠</div>
+        <h6>Neurologie</h6><small>15 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(0,184,148,.1);color:#00b894;">🫁</div>
+        <h6>Pneumologie</h6><small>12 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(253,203,110,.15);color:#e17055;">🦷</div>
+        <h6>Dentisterie</h6><small>35 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(214,48,49,.1);color:#d63031;">👁️</div>
+        <h6>Ophtalmologie</h6><small>19 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(9,132,227,.08);color:#0984e3;">🧬</div>
+        <h6>Dermatologie</h6><small>22 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(108,92,231,.1);color:#6c5ce7;">🦴</div>
+        <h6>Orthopédie</h6><small>18 médecins</small>
+      </div>
+      <div class="specialty-card">
+        <div class="icon" style="background:rgba(0,184,148,.1);color:#00b894;">🩺</div>
+        <h6>Médecine Gén.</h6><small>45 médecins</small>
+      </div>
+    </div>
   </div>
 </section>
+
+<!-- ════════════ FEATURES ════════════ -->
+<section class="section-features" style="padding: 6rem 0;">
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+  <div class="container" style="position:relative;z-index:1;">
+
+    <!-- Feature 1: Sécurité -->
+    <div class="row align-items-center g-5 mb-6" style="margin-bottom:5rem;">
+      <div class="col-lg-6 order-lg-2">
+        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> Sécurité Maximale</div>
+        <h2 class="section-title">Vos données médicales protégées au plus haut niveau</h2>
+        <p class="section-subtitle" style="max-width:100%;">Hébergement en France, chiffrement AES-256, authentification double facteur. MediSecure répond aux normes HDS, RGPD et ISO 27001.</p>
+        <div class="d-flex flex-wrap mt-3">
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Chiffrement AES-256</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Authentification 2FA</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Hébergé en France</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Audit annuel</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Zéro partage tiers</span>
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="feature-img-block">
+          <div style="text-align:center;">
+            <div style="font-size:6rem; line-height:1; margin-bottom:1rem;">🔒</div>
+            <div style="color:rgba(255,255,255,.7);font-size:.9rem;">Vos données sont sécurisées</div>
+          </div>
+          <div class="feature-floating top-left">
+            <i class="bi bi-shield-check-fill" style="color:#00b894;"></i>
+            <div><strong style="color:#111;font-size:.8rem;">Certifié HDS</strong><br><small style="color:#888;font-size:.7rem;">Hébergeur agréé</small></div>
+          </div>
+          <div class="feature-floating bottom-right">
+            <i class="bi bi-lock-fill" style="color:#6c5ce7;"></i>
+            <div><strong style="color:#111;font-size:.8rem;">Chiffrement E2E</strong><br><small style="color:#888;font-size:.7rem;">AES-256 bits</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 2: Téléconsultation -->
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="section-label"><i class="bi bi-camera-video-fill"></i> Téléconsultation</div>
+        <h2 class="section-title">Consultez votre médecin où que vous soyez</h2>
+        <p class="section-subtitle" style="max-width:100%;">Vidéo HD sécurisée, ordonnances numériques, partage de documents en temps réel. La consultation du futur, disponible maintenant.</p>
+        <div class="d-flex flex-wrap mt-3">
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Vidéo HD sécurisée</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Disponible 24/7</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Ordonnance numérique</span>
+          <span class="feature-pill"><i class="bi bi-check-circle-fill"></i> Remboursable CPAM</span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="feature-img-block">
+          <div style="text-align:center;">
+            <div style="font-size:6rem; line-height:1; margin-bottom:1rem;">📱</div>
+            <div style="color:rgba(255,255,255,.7);font-size:.9rem;">Consultation vidéo sécurisée</div>
+          </div>
+          <div class="feature-floating top-left">
+            <i class="bi bi-camera-video-fill" style="color:#0984e3;"></i>
+            <div><strong style="color:#111;font-size:.8rem;">Vidéo HD</strong><br><small style="color:#888;font-size:.7rem;">Connexion cryptée</small></div>
+          </div>
+          <div class="feature-floating bottom-right">
+            <i class="bi bi-file-earmark-medical-fill" style="color:#00b894;"></i>
+            <div><strong style="color:#111;font-size:.8rem;">Ordonnance PDF</strong><br><small style="color:#888;font-size:.7rem;">Envoyée en 1 clic</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════ STATS ════════════ -->
+<section class="stats-section">
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="d-flex justify-content-around align-items-center flex-wrap gap-4">
+      <div class="stat-counter">
+        <div class="number">150+</div>
+        <div class="label"><i class="bi bi-person-badge-fill me-1"></i>Médecins vérifiés</div>
+      </div>
+      <div class="stat-divider d-none d-md-block"></div>
+      <div class="stat-counter">
+        <div class="number">10k+</div>
+        <div class="label"><i class="bi bi-people-fill me-1"></i>Patients actifs</div>
+      </div>
+      <div class="stat-divider d-none d-md-block"></div>
+      <div class="stat-counter">
+        <div class="number">50k+</div>
+        <div class="label"><i class="bi bi-calendar2-check-fill me-1"></i>Consultations</div>
+      </div>
+      <div class="stat-divider d-none d-md-block"></div>
+      <div class="stat-counter">
+        <div class="number">98%</div>
+        <div class="label"><i class="bi bi-star-fill me-1"></i>Taux de satisfaction</div>
+      </div>
+      <div class="stat-divider d-none d-md-block"></div>
+      <div class="stat-counter">
+        <div class="number">< 2min</div>
+        <div class="label"><i class="bi bi-lightning-charge-fill me-1"></i>Délai de prise en charge</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ TÉMOIGNAGES ════════════ -->
+<section class="section-testimonials" style="padding: 6rem 0;">
+  <div class="blob blob-5"></div>
+  <div class="blob blob-6"></div>
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="text-center mb-5">
+      <div class="section-label"><i class="bi bi-chat-quote-fill"></i> Témoignages</div>
+      <h2 class="section-title">Ce que disent nos patients</h2>
+      <p class="section-subtitle mx-auto">Des milliers de personnes font confiance à MediSecure chaque jour.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>"Impressionnant. J'ai pris rendez-vous avec un cardiologue en moins de 5 minutes. La téléconsultation était d'une qualité parfaite et l'ordonnance m'est arrivée en PDF instantanément."</blockquote>
+          <div class="author">
+            <div class="avatar" style="background:linear-gradient(135deg,#0984e3,#6c5ce7);">AB</div>
+            <div>
+              <strong>Aminata Bah</strong>
+              <span>Patiente · Cardiologie</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>"En tant que médecin, MediSecure a transformé ma pratique. La gestion des rendez-vous est fluide, le dossier patient centralisé et l'interface est vraiment agréable à utiliser."</blockquote>
+          <div class="author">
+            <div class="avatar" style="background:linear-gradient(135deg,#6c5ce7,#00b894);">DM</div>
+            <div>
+              <strong>Dr. Marc Dupont</strong>
+              <span>Médecin Généraliste</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>"La sécurité de mes données était ma priorité. Avec la certification HDS et le chiffrement bout en bout, je peux consulter sereinement sans craindre pour ma vie privée."</blockquote>
+          <div class="author">
+            <div class="avatar" style="background:linear-gradient(135deg,#00b894,#0984e3);">YK</div>
+            <div>
+              <strong>Yasmine Kadem</strong>
+              <span>Patiente · Dermatologie</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ MOBILE APP ════════════ -->
+<section style="padding: 0 0 6rem;">
+  <div class="container">
+    <div class="app-section">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+          <div class="section-label"><i class="bi bi-phone-fill"></i> Application Mobile</div>
+          <h2 class="section-title">Votre santé dans votre poche</h2>
+          <p class="section-subtitle" style="max-width:100%;">L'application MediSecure iOS & Android vous permet de gérer vos rendez-vous, consulter vos ordonnances et contacter votre médecin — n'importe où, n'importe quand.</p>
+          <div class="d-flex gap-3 mt-4 flex-wrap">
+            <a href="#" class="store-btn">
+              <i class="bi bi-apple" style="font-size:1.8rem;"></i>
+              <div class="store-text">
+                <small>Télécharger sur</small>
+                <strong>App Store</strong>
+              </div>
+            </a>
+            <a href="#" class="store-btn">
+              <i class="bi bi-google-play" style="font-size:1.5rem;"></i>
+              <div class="store-text">
+                <small>Disponible sur</small>
+                <strong>Google Play</strong>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-5 text-center">
+          <div style="font-size:8rem;line-height:1;">📲</div>
+          <p class="text-muted mt-2" style="font-size:.85rem;">Disponible sur iOS &amp; Android</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ CTA FINAL ════════════ -->
+<section style="padding: 0 0 6rem;">
+  <div class="container">
+    <div class="cta-section">
+      <h2>Prêt à prendre soin de votre santé ?</h2>
+      <p>Rejoignez plus de 10 000 patients qui font confiance à MediSecure pour leur parcours de soins.</p>
+      <a href="{% url 'account_signup' %}" class="btn-cta-white">
+        <i class="bi bi-person-plus-fill"></i> Commencer gratuitement
+      </a>
+      <div class="d-flex justify-content-center gap-4 mt-4 flex-wrap" style="position:relative;">
+        <span style="color:rgba(255,255,255,.75);font-size:.85rem;"><i class="bi bi-check-circle me-1"></i>Aucune carte bancaire</span>
+        <span style="color:rgba(255,255,255,.75);font-size:.85rem;"><i class="bi bi-check-circle me-1"></i>Gratuit pour les patients</span>
+        <span style="color:rgba(255,255,255,.75);font-size:.85rem;"><i class="bi bi-check-circle me-1"></i>Données 100% sécurisées</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <i class="bi bi-shield-plus-fill"></i> MediSecure
+        </div>
+        <p>La plateforme de santé numérique qui connecte patients et professionnels de santé dans un environnement sécurisé et certifié HDS.</p>
+        <div class="footer-social mt-3">
+          <a href="#"><i class="bi bi-twitter-x"></i></a>
+          <a href="#"><i class="bi bi-linkedin"></i></a>
+          <a href="#"><i class="bi bi-facebook"></i></a>
+          <a href="#"><i class="bi bi-instagram"></i></a>
+        </div>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6>Plateforme</h6>
+        <ul class="footer-links-list">
+          <li><a href="#">Trouver un médecin</a></li>
+          <li><a href="#">Téléconsultation</a></li>
+          <li><a href="#">Mon dossier médical</a></li>
+          <li><a href="#">Mes ordonnances</a></li>
+          <li><a href="#">Remboursements</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6>Spécialités</h6>
+        <ul class="footer-links-list">
+          <li><a href="#">Cardiologie</a></li>
+          <li><a href="#">Dermatologie</a></li>
+          <li><a href="#">Pédiatrie</a></li>
+          <li><a href="#">Gynécologie</a></li>
+          <li><a href="#">Voir toutes →</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6>Professionnels</h6>
+        <ul class="footer-links-list">
+          <li><a href="#">Rejoindre la plateforme</a></li>
+          <li><a href="#">Espace médecin</a></li>
+          <li><a href="#">Gestion agenda</a></li>
+          <li><a href="#">Facturation</a></li>
+          <li><a href="#">Tarifs</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6>À propos</h6>
+        <ul class="footer-links-list">
+          <li><a href="{% url 'about' %}">Notre mission</a></li>
+          <li><a href="#">Presse</a></li>
+          <li><a href="#">Carrières</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Blog santé</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <span>© 2026 MediSecure. Tous droits réservés.</span>
+        <a href="#" style="color:rgba(255,255,255,.4);margin-left:1.5rem;font-size:.8rem;">Mentions légales</a>
+        <a href="#" style="color:rgba(255,255,255,.4);margin-left:1rem;font-size:.8rem;">Politique de confidentialité</a>
+        <a href="#" style="color:rgba(255,255,255,.4);margin-left:1rem;font-size:.8rem;">CGU</a>
+      </div>
+      <div>
+        <span class="certif-badge"><i class="bi bi-shield-check-fill"></i> HDS</span>
+        <span class="certif-badge"><i class="bi bi-lock-fill"></i> RGPD</span>
+        <span class="certif-badge"><i class="bi bi-award-fill"></i> ISO 27001</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
 {% endblock %}

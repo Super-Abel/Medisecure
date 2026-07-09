@@ -62,8 +62,6 @@ class SignesVitauxSerializer(serializers.ModelSerializer):
 
 
 class LabResultMobileSerializer(serializers.ModelSerializer):
-    examen = serializers.CharField(source="examen")
-
     class Meta:
         model = ResultatAnalyse
         fields = ["id", "examen", "valeur", "unite", "norme", "statut", "date_examen"]
